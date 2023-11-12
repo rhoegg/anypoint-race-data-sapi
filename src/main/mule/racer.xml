@@ -8,7 +8,7 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<flow name="getRacer" doc:id="fe9eb56e-0b7b-4776-8783-1e3be2bd9836" >
 		<redis:get doc:name="racer" doc:id="83b7342f-725e-40fb-b0ad-c39ec37018f7" config-ref="redisConfig" key='#["racer:$(vars.racerId)"]'/>
-		<validation:is-not-blank-string doc:id="b6688b8b-3024-423e-b11b-765efff53b41" doc:name="Is not blank string" >
+		<validation:is-not-blank-string doc:id="b6688b8b-3024-423e-b11b-765efff53b41" doc:name="Is not blank string" message='#["racer $(vars.racerId) not found"]'>
 			<error-mapping targetType="APP:NO_RACER_DATA" />
 		</validation:is-not-blank-string>
 		<ee:transform doc:name="parse JSON" doc:id="898b9087-1dbe-4961-920d-b677713b9d69" >
@@ -21,5 +21,12 @@ var payloadNoNewline = payload replace "\n" with ""
 read(payloadNoNewline, "application/json")]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="68efcba8-a37f-4a10-a91c-5a9911a6ee6e" type="APP:NO_RACER_DATA">
+				<logger level="WARN" doc:name="WARN" doc:id="233b5471-b196-4045-a56b-d29bb26479b6" message="Racer #[vars.racerId] not found" category="race-data-sapi.getRacer"/>
+				<set-variable value="404" doc:name="httpStatus = 404" doc:id="ae4299c5-5f3c-4519-b0a8-1958d44d9e65" variableName="httpStatus"/>
+				<set-payload value='#[""]' doc:name="Clear Payload" doc:id="d46f9191-3d2b-4e3b-9f46-dca86e44b946" />
+			</on-error-continue>
+		</error-handler>
 	</flow>
 </mule>
