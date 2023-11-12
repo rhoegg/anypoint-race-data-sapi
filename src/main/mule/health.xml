@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="livenessCheck" doc:id="08a170f3-85ec-4d92-b469-a3fd9599d5f5" >
+		<set-payload value="OK" doc:name="OK" doc:id="ec3bb209-dc0d-4869-b3be-c5b0b753c6a1" />
+		<logger level="INFO" doc:name="INFO" doc:id="09161ce4-3b7f-4f3a-bc02-8c94187ff8ba" message="Health check: Liveness OK" category="race-data-sapi.health.liveness"/>
+	</flow>
+	<flow name="readinessCheck" doc:id="a86dd88a-5ee9-4145-a2fa-b051ff09d709" >
+		<redis:get doc:name="muleping" doc:id="5b40c229-44a2-4363-9d20-3a4300032039" doc:description="Using this because the Mule connector does not support PING" key="muleping" config-ref="redisConfig"/>
+		<validation:is-true doc:name="PONG" doc:id="938c5ff6-e768-4de3-b38f-d12c0987543a" expression="#[payload == 'PONG']" message="missing expected PONG, got #[payload]">
+			<error-mapping targetType="APP:NOT_READY" />
+		</validation:is-true>
+		<ee:transform doc:name="OK" doc:id="356b3e3a-404b-4c2a-94fe-94e0cc72eae5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	redis: {
+		health: "OK"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="INFO" doc:id="e96beceb-35c2-401c-9df5-8ff6c78f5db3" category="race-data-sapi.health.ready" message="Health check: Readiness OK"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f8c05f71-ba21-406c-a36f-acde5b66f9ff" >
+				<set-variable value="503" doc:name="httpStatus" doc:id="18bf8b30-672c-43c6-a310-95c26cdb900d" variableName="httpStatus"/>
+				<ee:transform doc:name="Down" doc:id="d4e7a296-ca94-41df-a7ca-841aa6afdc1e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	redis: {
+		health: "Down",
+		error: error.description
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="INFO" doc:id="e4efa6bb-00ba-4547-88b7-b48dd473bd62" category="race-data-sapi.health.ready" message="Health check: Readiness down"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

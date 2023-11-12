@@ -16,6 +16,9 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			<otherwise >
 				<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="482e2904-b5fd-4fc5-b07d-a93397363465" variableName="raceKey" />
 				<redis:get-all-from-hash doc:name="raceKey" doc:id="d731132b-b59f-4b91-8a42-179d2f4adce3" config-ref="redisConfig" key="#[vars.raceKey]"/>
+				<validation:is-not-blank-string doc:name="Is not blank string" doc:id="c91f5fe9-05c0-4ced-8d45-7c14834f55ef" message='#["$(vars.raceKey) not found"]'>
+					<error-mapping sourceType="VALIDATION:BLANK_STRING" targetType="APP:NOT_FOUND" />
+				</validation:is-not-blank-string>
 				<ee:transform doc:name="to JSON" doc:id="d9e0fb04-792e-4489-be6b-ee9f55709e0d" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
@@ -40,6 +43,13 @@ output application/json
 				</ee:transform>
 			</otherwise>
 		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="6c1ac10f-fb3a-4540-8ab5-70015135f79f" type="APP:NOT_FOUND">
+				<logger level="WARN" doc:name="WARN" doc:id="c6c503c1-e70f-4cef-8039-0ba0fad43a41" message="#[error.description]" category="race-data-sapi.getRace"/>
+				<set-variable value="404" doc:name="httpStatus = 404" doc:id="37dcb7c4-ff80-427c-aa9a-19bfd8983f87" variableName="httpStatus"/>
+				<set-payload value='#[""]' doc:name="Clear Payload" doc:id="53861354-fb03-4bb5-b2bc-749bf93291d7" />
+			</on-error-propagate>
+		</error-handler>
 	</flow>
 	<flow name="setRace" doc:id="1e49818a-7246-43b9-a2f5-70fdbde1a777" >
 		<validation:is-false doc:name="raceType = legacy" doc:id="d13f65ec-116b-452b-8df9-60f21c709acf" expression='#[vars.raceType == "legacy"]' message="Legacy races are read only">

@@ -1,0 +1,11 @@
+%dw 2.0
+
+type auto_a86dd88a_5ee9_4145_a2fa_b051ff09d709_Output_Payload = {
+  redis: {
+    health: String, 
+    error?: String, 
+    _?: Any
+  }, 
+  _?: Any
+}
+
