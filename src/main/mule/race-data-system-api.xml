@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+
     <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.0.1:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
@@ -132,12 +133,9 @@ output application/json
         <logger level="INFO" doc:name="INFO" doc:id="63613929-fe60-4637-831a-a23685b5000b" message="Retrieved race #[vars.raceType]:#[vars.raceId]" category="race-data-sapi.api" />
     </flow>
     <flow name="put:\races\(raceType)\(id):application\json:race-data-system-api-config">
-        <ee:transform doc:name="Transform Message">
-            <ee:variables>
-                <ee:set-variable variableName="raceType">attributes.uriParams.'raceType'</ee:set-variable>
-                <ee:set-variable variableName="id">attributes.uriParams.'id'</ee:set-variable>
-            </ee:variables>
-        </ee:transform>
-        <logger level="INFO" message="put:\races\(raceType)\(id):application\json:race-data-system-api-config" />
+		<set-variable value="#[attributes.uriParams.raceType]" doc:name="raceType" doc:id="4eb14fbf-abd3-4839-930e-59f026c2092c" variableName="raceType" />
+		<set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="e722ff76-5212-484f-8c33-ee2cabefd428" variableName="raceId" />
+		<flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace"/>
+		<logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message="Wrote race #[vars.raceType]:#[vars.raceId]" category="race-data-sapi.api" />
     </flow>
 </mule>
