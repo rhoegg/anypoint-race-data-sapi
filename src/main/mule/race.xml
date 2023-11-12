@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getRace" doc:id="5c72e95d-d18a-45f1-9741-c843e40bbd51" >
+		<choice doc:name="Choice" doc:id="cc2ee38e-a5b9-4fe7-96af-31ac6a5fa889" >
+			<when expression='#[vars.raceType == "legacy"]'>
+				<set-variable value='#["race:$(vars.raceId)"]' doc:name="raceKey" doc:id="379735b4-fa5b-4b4f-a0cc-44a70b7d8e53" variableName="raceKey"/>
+				<redis:get doc:name="raceKey" doc:id="8def59a5-efc0-4758-8f88-3ca7611aed5a" config-ref="redisConfig" key="#[vars.raceKey]" />
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="acb7e23c-a9a4-4257-8d42-b9adeef347c2" message="#[payload]" category="race-data-sapi.getRace.legacy"/>
+				<raise-error doc:name="APP:NOT_SUPPORTED_YET" doc:id="935a2d63-31e5-4f70-80f7-d594cf217670" type="APP:NOT_SUPPORTED_YET" description="unsupported legacy race data requested"/>
+			</when>
+			<otherwise >
+				<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="482e2904-b5fd-4fc5-b07d-a93397363465" variableName="raceKey" />
+				<redis:get-all-from-hash doc:name="raceKey" doc:id="d731132b-b59f-4b91-8a42-179d2f4adce3" config-ref="redisConfig" key="#[vars.raceKey]"/>
+				<ee:transform doc:name="to JSON" doc:id="d9e0fb04-792e-4489-be6b-ee9f55709e0d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	racerId: payload.racerId,
+	raceId: payload.raceId,
+	(token: payload.token) if (payload.token?),
+	start: payload.start,
+	(finish: payload.finish) if (payload.finish?),
+	(lap: {
+		count: payload.lapcount
+	}) if (payload.lapcount?),
+	(data: read(payload.data!, "application/json")) if (payload.data?)
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

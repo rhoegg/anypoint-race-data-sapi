@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getRacer" doc:id="fe9eb56e-0b7b-4776-8783-1e3be2bd9836" >
+		<redis:get doc:name="racer" doc:id="83b7342f-725e-40fb-b0ad-c39ec37018f7" config-ref="redisConfig" key='#["racer:$(vars.racerId)"]'/>
+		<validation:is-not-blank-string doc:id="b6688b8b-3024-423e-b11b-765efff53b41" doc:name="Is not blank string" >
+			<error-mapping targetType="APP:NO_RACER_DATA" />
+		</validation:is-not-blank-string>
+		<ee:transform doc:name="parse JSON" doc:id="898b9087-1dbe-4961-920d-b677713b9d69" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+var payloadNoNewline = payload replace "\n" with ""
+---
+read(payloadNoNewline, "application/json")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
