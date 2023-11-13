@@ -152,8 +152,5 @@ output application/json
         <set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="e722ff76-5212-484f-8c33-ee2cabefd428" variableName="raceId" />
         <flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace" />
         <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message="Wrote race #[vars.raceType]:#[vars.raceId]" category="race-data-sapi.api" />
-		<error-handler >
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="360606a8-2ee7-42cd-a7b5-18bf73a349a9" type="ANY"/>
-		</error-handler>
     </flow>
 </mule>

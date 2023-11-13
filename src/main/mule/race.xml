@@ -35,8 +35,8 @@ output application/json
 	(token: payload.token) if payload.token?,
 	(lap: {
 		count: payload.lapcount,
-		start: fromRedisDate(payload.lap.start),
-		(finish: fromRedisDate(payload.lap.finish)) if payload.lap.finish?
+		start: fromRedisDate(payload.lapstart),
+		(finish: fromRedisDate(payload.lapfinish)) if payload.lap.finish?
 	}) if payload.lapcount?,
 	(data: read(payload.data!, "application/json")) if payload.data?
 }]]></ee:set-payload>
