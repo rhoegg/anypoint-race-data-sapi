@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 	<configuration-properties doc:name="Configuration properties" doc:id="8c05427f-98d0-4417-88ac-e24f09e6d6f3" file="config/${mule.env}.yaml" />
 	<global-property doc:name="Global Property" doc:id="c9c83d2a-2add-4856-bd01-59f7521165a4" name="mule.env" value="local" />
     <http:listener-config name="race-data-system-api-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8081" />
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
     </http:listener-config>
 	<redis:redis-config name="redisConfig" doc:name="Redis Redis" doc:id="ff80d497-1a8e-439f-86ac-2ac19c2b782d" >
 		<redis:nonclustered-connection host="${redis.host}" port="${redis.port}" password="${redis.password}" />

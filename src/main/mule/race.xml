@@ -15,27 +15,28 @@ http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mu
 			</when>
 			<otherwise >
 				<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="482e2904-b5fd-4fc5-b07d-a93397363465" variableName="raceKey" />
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="95e10b0a-d8d5-442c-98a2-2e6b88a7dfb8" message="race key: #[vars.raceKey]" category="race-data-sapi.getRace"/>
 				<redis:get-all-from-hash doc:name="raceKey" doc:id="d731132b-b59f-4b91-8a42-179d2f4adce3" config-ref="redisConfig" key="#[vars.raceKey]"/>
-				<validation:is-not-blank-string doc:name="Is not blank string" doc:id="c91f5fe9-05c0-4ced-8d45-7c14834f55ef" message='#["$(vars.raceKey) not found"]'>
-					<error-mapping sourceType="VALIDATION:BLANK_STRING" targetType="APP:NOT_FOUND" />
-				</validation:is-not-blank-string>
-				<ee:transform doc:name="to JSON" doc:id="d9e0fb04-792e-4489-be6b-ee9f55709e0d" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="98827bf1-8dac-4924-a99a-f635bd93e291" message="results: #[output application/json --- payload]" category="race-data-sapi.getRace"/>
+				<validation:is-false doc:name="empty payload" doc:id="f74bc9ed-dbaf-4b34-802b-bdfb0fa38632" expression="#[isEmpty(payload)]" message='#["$(vars.raceKey) not found"]'>
+					<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:NOT_FOUND" />
+				</validation:is-false>
+				<ee:transform doc:name="to Race" doc:id="8c0b40ce-8890-4904-87ef-40dd39dcd7d0">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
 import * from dw::app::Transforms
-
 output application/json
 ---
 {
 	racerId: payload.racerid,
 	raceId: payload.raceid,
-	(token: payload.token) if payload.token?,
 	start: fromRedisDate(payload.start),
 	(finish: fromRedisDate(payload.finish)) if payload.finish?,
+	(token: payload.token) if payload.token?,
 	(lap: {
 		count: payload.lapcount,
-		start: fromRedisDate(payload.lapstart),
-		(finish: fromRedisDate(payload.lapfinish)) if payload.lapfinish?
+		start: fromRedisDate(payload.lap.start),
+		(finish: fromRedisDate(payload.lap.finish)) if payload.lap.finish?
 	}) if payload.lapcount?,
 	(data: read(payload.data!, "application/json")) if payload.data?
 }]]></ee:set-payload>
@@ -44,11 +45,7 @@ output application/json
 			</otherwise>
 		</choice>
 		<error-handler >
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="6c1ac10f-fb3a-4540-8ab5-70015135f79f" type="APP:NOT_FOUND">
-				<logger level="WARN" doc:name="WARN" doc:id="c6c503c1-e70f-4cef-8039-0ba0fad43a41" message="#[error.description]" category="race-data-sapi.getRace"/>
-				<set-variable value="404" doc:name="httpStatus = 404" doc:id="37dcb7c4-ff80-427c-aa9a-19bfd8983f87" variableName="httpStatus"/>
-				<set-payload value='#[""]' doc:name="Clear Payload" doc:id="53861354-fb03-4bb5-b2bc-749bf93291d7" />
-			</on-error-continue>
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="b689e8a5-e82f-45d0-902c-d3800aa1a3b6" />
 		</error-handler>
 	</flow>
 	<flow name="setRace" doc:id="1e49818a-7246-43b9-a2f5-70fdbde1a777" >
@@ -82,5 +79,8 @@ output application/json
 			</redis:set-in-hash>
 		</parallel-foreach>
 		<set-payload value="OK" doc:name="OK" doc:id="d27b2cfb-50f5-4646-9809-44af8641d139" />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="67a28bd1-6d6d-4d0f-99b7-214406561fe9" />
+		</error-handler>
 	</flow>
 </mule>
