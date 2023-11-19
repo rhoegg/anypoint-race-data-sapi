@@ -2,7 +2,7 @@ api:
   id: "19104267"
   
 http:
-  port: "8082"
+  port: "8081"
 
 redis:
   host: redis-15552.c1.us-east1-2.gce.cloud.redislabs.com
