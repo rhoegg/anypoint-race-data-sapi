@@ -73,6 +73,7 @@ output application/json
 } pluck (value, field) -> {field: field, value: value}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="568d5292-39ed-4dd4-9c5d-ff8273a5c64d" message="#[payload]" category="race-data-sapi.setRace"/>
 		<parallel-foreach doc:name="Parallel For Each" doc:id="90682b0c-cdbb-4ce5-9a1c-cd874e3a1ab5" >
 			<redis:set-in-hash doc:name="raceKey" doc:id="b57172c1-5f24-4753-a0a3-ff7a48f978c0" config-ref="redisConfig" key="#[vars.raceKey]" field="#[payload.field]">
 				<redis:value ><![CDATA[#[payload.value]]]></redis:value>

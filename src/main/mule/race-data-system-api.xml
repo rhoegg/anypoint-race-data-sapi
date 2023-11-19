@@ -151,6 +151,6 @@ output application/json
         <set-variable value="#[attributes.uriParams.raceType]" doc:name="raceType" doc:id="4eb14fbf-abd3-4839-930e-59f026c2092c" variableName="raceType" />
         <set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="e722ff76-5212-484f-8c33-ee2cabefd428" variableName="raceId" />
         <flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace" />
-        <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message="Wrote race #[vars.raceType]:#[vars.raceId]" category="race-data-sapi.api" />
+        <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message='#["Wrote race $(vars.raceType):$(vars.raceId)"]' category="race-data-sapi.api" />
     </flow>
 </mule>
