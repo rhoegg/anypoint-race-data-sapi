@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.0.6:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.0.9:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -124,33 +124,42 @@ output application/json
         </error-handler>
     </flow>
     <flow name="get:\health:race-data-system-api-config">
-		<flow-ref doc:name="livenessCheck" doc:id="f2ba7f6d-6ba8-4c16-bf41-c547bc6dbfad" name="livenessCheck"/>
+        <flow-ref doc:name="livenessCheck" doc:id="f2ba7f6d-6ba8-4c16-bf41-c547bc6dbfad" name="livenessCheck" />
     </flow>
-	<flow name="get:\health\ready:race-data-system-api-config">
-		<flow-ref doc:name="readinessCheck" doc:id="270cab16-1def-4317-b953-c6bbe0e1212b" name="readinessCheck"/>
-    </flow>
-	<flow name="get:\racers\(id):race-data-system-api-config">
-        <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="8b1b3f05-5320-42ea-bdce-b3ddc9645449" variableName="racerId" />
-        <flow-ref doc:name="getRacer" doc:id="017ff9d7-db85-4aeb-b7b6-47d6e9ecc7c1" name="getRacer" />
-        <logger level="INFO" doc:name="INFO" doc:id="e75e5d4a-40b5-404c-bd23-a2b77d6bf9e6" category="race-data-sapi.api" message="Retrieved racer #[vars.racerId]" />
+    <flow name="get:\health\ready:race-data-system-api-config">
+        <flow-ref doc:name="readinessCheck" doc:id="270cab16-1def-4317-b953-c6bbe0e1212b" name="readinessCheck" />
     </flow>
     <flow name="get:\races\(raceType)\(id):race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.raceType]" doc:name="raceType" doc:id="cf3fcf3a-8d42-4ceb-a13c-cc1cf78697a8" variableName="raceType" />
         <set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="dfcf7e0a-7149-44a2-b933-7f8c48901a0e" variableName="raceId" />
         <flow-ref doc:name="getRace" doc:id="db71daa0-b0aa-4bf3-b695-70cbe9dac664" name="getRace" />
         <logger level="INFO" doc:name="INFO" doc:id="63613929-fe60-4637-831a-a23685b5000b" message="Retrieved race #[vars.raceType]:#[vars.raceId]" category="race-data-sapi.api" />
-		<error-handler>
-			<on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="fab00539-30cf-4308-8229-5653db18d9ec" type="APP:NOT_FOUND">
-				<logger level="WARN" doc:name="WARN" doc:id="9cb1b1e0-bb1d-40db-8e09-32a7138212a5" message="#[error.description]" category="race-data-sapi.getRace"/>
-				<set-variable value="404" doc:name="httpStatus = 404" doc:id="dd97cbad-cb4b-495a-a20f-27b65df8194c" variableName="httpStatus"/>
-				<set-payload value='#[""]' doc:name="Clear Payload" doc:id="a8fefb02-3ecc-4acd-bee7-4c7d4b7b6013" />
-			</on-error-continue>
-		</error-handler>
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="false" doc:name="On Error Continue" doc:id="fab00539-30cf-4308-8229-5653db18d9ec" type="APP:NOT_FOUND">
+                <logger level="WARN" doc:name="WARN" doc:id="9cb1b1e0-bb1d-40db-8e09-32a7138212a5" message="#[error.description]" category="race-data-sapi.getRace" />
+                <set-variable value="404" doc:name="httpStatus = 404" doc:id="dd97cbad-cb4b-495a-a20f-27b65df8194c" variableName="httpStatus" />
+                <set-payload value="#[&quot;&quot;]" doc:name="Clear Payload" doc:id="a8fefb02-3ecc-4acd-bee7-4c7d4b7b6013" />
+            </on-error-continue>
+        </error-handler>
     </flow>
     <flow name="put:\races\(raceType)\(id):application\json:race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.raceType]" doc:name="raceType" doc:id="4eb14fbf-abd3-4839-930e-59f026c2092c" variableName="raceType" />
         <set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="e722ff76-5212-484f-8c33-ee2cabefd428" variableName="raceId" />
         <flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace" />
-        <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message='#["Wrote race $(vars.raceType):$(vars.raceId)"]' category="race-data-sapi.api" />
+        <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message="#[&quot;Wrote race $(vars.raceType):$(vars.raceId)&quot;]" category="race-data-sapi.api" />
+    </flow>
+	<flow name="get:\racers:race-data-system-api-config">
+        <logger level="INFO" message="get:\racers:race-data-system-api-config" />
+    </flow>
+	<flow name="post:\racers:application\json:race-data-system-api-config">
+		<flow-ref doc:name="createRacer" doc:id="929c7284-2e74-4de4-b64a-1f9a187fd919" name="createRacer"/>
+    </flow>
+	<flow name="get:\racers\(id):race-data-system-api-config">
+        <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="8b1b3f05-5320-42ea-bdce-b3ddc9645449" variableName="racerId" />
+        <flow-ref doc:name="getRacer" doc:id="017ff9d7-db85-4aeb-b7b6-47d6e9ecc7c1" name="getRacer" />
+        <logger level="INFO" doc:name="INFO" doc:id="e75e5d4a-40b5-404c-bd23-a2b77d6bf9e6" category="race-data-sapi.api" message="Retrieved racer #[vars.racerId]" />
+    </flow>
+	<flow name="put:\racers\(id):application\json:race-data-system-api-config">
+		<logger level="INFO" doc:name="Logger" doc:id="2c32dce9-3e93-465d-bc23-4963063d4eff" />
     </flow>
 </mule>

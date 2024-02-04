@@ -6,6 +6,52 @@
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
+		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
+		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
+			<when expression="#[isEmpty(vars.racerId)]">
+				<set-variable value="#[uuid()]" doc:name="racerId" doc:id="ebb1fe37-d5ca-4380-aae3-4d1d320e1cb3" variableName="racerId"/>
+				<redis:set doc:name="racerId" doc:id="4d1714e2-147b-4d3b-8f99-61c3e548ede0" target="setRacerIdResult" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' ifNotExists="true"/>
+				<set-variable value="#[now()]" doc:name="created" doc:id="c8a89423-5af0-41f6-86cd-887c54e430fe" variableName="created"/>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="1b864dbd-6259-4835-ae89-fcf2cc9694fb" category="race-data-sapi.createRacer" message="found existing racer ID #[vars.racerId]"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="to hash field array" doc:id="9752fe64-9bfc-419e-bfdb-48679784da64" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="hashFieldArray" ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+{
+	name: payload.displayName,
+	email: payload.email,
+	racerId: vars.racerId,
+	clientId: payload.clientId,
+	(created: toRedisDate(vars.created)) if vars.created?
+} pluck (value, field) -> {field: field, value: value}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="2d72c9e0-b904-4783-81f7-181d8cae7803" message="#[payload]" category="race-data-sapi.createRacer"/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="6fd31d9b-e7e9-4991-a7cf-7b3d1eba7f92" target="hsetResult" collection="#[vars.hashFieldArray]">
+			<redis:set-in-hash doc:name="racerprofile" doc:id="f9d489d9-8fe3-4f74-b71d-74ae6f5dc672" config-ref="redisConfig" key='#["racerprofile:$(vars.racerId)"]' field="#[payload.field]">
+				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
+			</redis:set-in-hash>
+		</parallel-foreach>
+		<ee:transform doc:name="response" doc:id="188ef256-877a-47bf-89a6-5af3078b23b4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+	racerId: vars.racerId
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 	<flow name="getRacer" doc:id="fe9eb56e-0b7b-4776-8783-1e3be2bd9836" >
 		<redis:get doc:name="racer" doc:id="83b7342f-725e-40fb-b0ad-c39ec37018f7" config-ref="redisConfig" key='#["racer:$(vars.racerId)"]'/>
 		<validation:is-not-blank-string doc:id="b6688b8b-3024-423e-b11b-765efff53b41" doc:name="Is not blank string" message='#["racer $(vars.racerId) not found"]'>
