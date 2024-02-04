@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
 	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
 		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
@@ -53,18 +54,16 @@ payload ++ {
 		</ee:transform>
 	</flow>
 	<flow name="getRacer" doc:id="fe9eb56e-0b7b-4776-8783-1e3be2bd9836" >
-		<redis:get doc:name="racer" doc:id="83b7342f-725e-40fb-b0ad-c39ec37018f7" config-ref="redisConfig" key='#["racer:$(vars.racerId)"]'/>
-		<validation:is-not-blank-string doc:id="b6688b8b-3024-423e-b11b-765efff53b41" doc:name="Is not blank string" message='#["racer $(vars.racerId) not found"]'>
-			<error-mapping targetType="APP:NO_RACER_DATA" />
-		</validation:is-not-blank-string>
-		<ee:transform doc:name="parse JSON" doc:id="898b9087-1dbe-4961-920d-b677713b9d69" >
+		<redis:get-all-from-hash doc:name="Get all from hash" doc:id="09e6f5ff-be6d-4821-8b3f-9a4fe93df4ad" config-ref="redisConfig" key='#["racerprofile:$(vars.racerId)"]'/>
+		<validation:is-not-null doc:name="Is not null" doc:id="3a4571a3-4fae-4002-8ba1-dd3228c5f8b6" value="#[payload]" message="no such racer #[vars.racerId]">
+			<error-mapping sourceType="VALIDATION:NULL" targetType="APP:NO_RACER_DATA" />
+		</validation:is-not-null>
+		<ee:transform doc:name="Transform Message" doc:id="d1d9b36c-1415-431a-af15-4c6db768b102" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
-import * from dw::core::Strings
-var payloadNoNewline = payload replace "\n" with ""
 ---
-read(payloadNoNewline, "application/json")]]></ee:set-payload>
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<error-handler >
@@ -75,4 +74,39 @@ read(payloadNoNewline, "application/json")]]></ee:set-payload>
 			</on-error-continue>
 		</error-handler>
 	</flow>
+	<sub-flow name="searchRacersByClientId" doc:id="dded6f18-2455-4389-99fe-e3f264081eb4" >
+		<redis:get doc:name="racerid" doc:id="da5e7b85-8e8d-4e02-ad94-c25649305379" config-ref="redisConfig" key='#["racerid:$(vars.clientId)"]'/>
+		<ee:transform doc:name="response" doc:id="0c9e5b89-38d8-410e-bf0f-6dc43dd87cde" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if (payload == null) []
+else [{racerId: payload}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+	<sub-flow name="updateRacer" doc:id="15480212-7475-460b-a896-cf1a1c8569a3" >
+		<ee:transform doc:name="to hash field array" doc:id="cf4b4b53-6f5a-4c49-a43c-f1006e2134fa" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="hashFieldArray" ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+{
+	name: payload.displayName,
+	email: payload.email,
+	racerId: vars.racerId
+} pluck (value, field) -> {field: field, value: value}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="152832f5-ac1f-4f3f-84ea-cde4eb7a2bdd" category="race-data-sapi.updateRacer" message="#[payload]"/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="bcfa17d9-8784-42e5-9e68-38bfe3242132" collection="#[vars.hashFieldArray]" target="hsetResult">
+			<redis:set-in-hash doc:name="racerprofile" doc:id="67cb121c-c1e7-418e-8f61-3be62e8e2b87" config-ref="redisConfig" key='#["racerprofile:$(vars.racerId)"]' field="#[payload.field]">
+				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
+			</redis:set-in-hash>
+		</parallel-foreach>
+	</sub-flow>
 </mule>

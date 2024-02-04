@@ -1,0 +1,10 @@
+%dw 2.0
+
+type auto_15480212_7475_460b_a896_cf1a1c8569a3_Output_Payload = {
+  racerId?: String, 
+  clientId: String, 
+  displayName: String, 
+  email: String, 
+  _?: Any
+}
+
