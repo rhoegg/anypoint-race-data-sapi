@@ -55,9 +55,9 @@ payload ++ {
 	</flow>
 	<flow name="getRacer" doc:id="fe9eb56e-0b7b-4776-8783-1e3be2bd9836" >
 		<redis:get-all-from-hash doc:name="Get all from hash" doc:id="09e6f5ff-be6d-4821-8b3f-9a4fe93df4ad" config-ref="redisConfig" key='#["racerprofile:$(vars.racerId)"]'/>
-		<validation:is-not-null doc:name="Is not null" doc:id="3a4571a3-4fae-4002-8ba1-dd3228c5f8b6" value="#[payload]" message="no such racer #[vars.racerId]">
-			<error-mapping sourceType="VALIDATION:NULL" targetType="APP:NO_RACER_DATA" />
-		</validation:is-not-null>
+		<validation:is-true doc:name="not empty object" doc:id="2eeee3dd-7c9b-4956-b7ab-185b5fc2a8db" expression="#[payload != {}]" message="no such racer #[vars.racerId]">
+			<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:NO_RACER_DATA" />
+		</validation:is-true>
 		<ee:transform doc:name="Transform Message" doc:id="d1d9b36c-1415-431a-af15-4c6db768b102" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
