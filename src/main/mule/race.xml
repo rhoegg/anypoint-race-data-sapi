@@ -66,6 +66,7 @@ output application/json
 	(token: payload.token) if payload.token?,
 	start: toRedisDate(payload.start),
 	(finish: toRedisDate(payload.finish)) if payload.finish?,
+	(time: payload.time) if payload.time?,
 	(lapcount: payload.lap.count) if payload.lap?,
 	(lapstart: toRedisDate(payload.lap.start)) if payload.lap?,
 	(lapfinish: toRedisDate(payload.lap.finish)) if payload.lap.finish?,
