@@ -12,7 +12,9 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
 			<when expression="#[isEmpty(vars.racerId)]">
 				<set-variable value="#[uuid()]" doc:name="racerId" doc:id="ebb1fe37-d5ca-4380-aae3-4d1d320e1cb3" variableName="racerId"/>
-				<redis:set doc:name="racerId" doc:id="4d1714e2-147b-4d3b-8f99-61c3e548ede0" target="setRacerIdResult" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' ifNotExists="true"/>
+				<redis:set doc:name="racerId" doc:id="4d1714e2-147b-4d3b-8f99-61c3e548ede0" target="setRacerIdResult" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' ifNotExists="true">
+					<redis:value ><![CDATA[#[vars.racerId]]]></redis:value>
+				</redis:set>
 				<set-variable value="#[now()]" doc:name="created" doc:id="c8a89423-5af0-41f6-86cd-887c54e430fe" variableName="created"/>
 			</when>
 			<otherwise >
