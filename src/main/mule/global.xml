@@ -13,7 +13,11 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
         <http:listener-connection host="0.0.0.0" port="${http.port}" />
     </http:listener-config>
 	<redis:redis-config name="redisConfig" doc:name="Redis Redis" doc:id="ff80d497-1a8e-439f-86ac-2ac19c2b782d" >
-		<redis:nonclustered-connection host="${redis.host}" port="${redis.port}" password="${redis.password}" />
+		<redis:nonclustered-connection host="${redis.host}" port="${redis.port}" password="${redis.password}" testOnBorrow="true">
+			<reconnection failsDeployment="true" >
+				<reconnect-forever frequency="60000" />
+			</reconnection>
+		</redis:nonclustered-connection>
 	</redis:redis-config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="9eb514ba-846a-44ce-a1fb-269facfa4d29" flowRef="race-data-system-api-main" />
 </mule>
