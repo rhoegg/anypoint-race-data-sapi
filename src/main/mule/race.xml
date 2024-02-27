@@ -63,7 +63,7 @@ output application/json
 {
 	racerid: payload.racerId,
 	raceid: payload.raceId,
-	"type": vars.raceType,
+	"type": if (isEmpty(vars.expiry)) "official" else "practice",
 	(token: payload.token) if payload.token?,
 	start: toRedisDate(payload.start),
 	(finish: toRedisDate(payload.finish)) if payload.finish?,
