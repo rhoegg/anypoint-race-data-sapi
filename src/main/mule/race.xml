@@ -63,6 +63,7 @@ output application/json
 {
 	racerid: payload.racerId,
 	raceid: payload.raceId,
+	"type": vars.raceType,
 	(token: payload.token) if payload.token?,
 	start: toRedisDate(payload.start),
 	(finish: toRedisDate(payload.finish)) if payload.finish?,
@@ -80,6 +81,14 @@ output application/json
 				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
 			</redis:set-in-hash>
 		</parallel-foreach>
+		<choice doc:name="Choice" doc:id="72c48726-ad2a-421d-9be3-6784a85bd788" >
+			<when expression="#[! isEmpty(vars.expiry)]">
+				<redis:expire doc:name="raceKey" doc:id="241d18d0-e7cb-44fb-a16d-6481277d215a" config-ref="redisConfig" key="#[vars.raceKey]" seconds="#[vars.expiry]"/>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="e79ea130-e077-4192-a808-0b061a3cb84f" message="Not expiring #[vars.raceKey]" category="race-data-sapi.setRace"/>
+			</otherwise>
+		</choice>
 		<set-payload value="OK" doc:name="OK" doc:id="d27b2cfb-50f5-4646-9809-44af8641d139" />
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="67a28bd1-6d6d-4d0f-99b7-214406561fe9" />

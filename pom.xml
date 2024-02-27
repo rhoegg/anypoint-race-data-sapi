@@ -94,13 +94,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
-			<artifactId>race-data-system-api</artifactId>
-			<version>1.0.13</version>
-			<classifier>raml</classifier>
-			<type>zip</type>
-		</dependency>
-		<dependency>
 			<groupId>com.mulesoft.services</groupId>
 			<artifactId>mule-service-weave-ee</artifactId>
 			<version>2.4.0-20221212</version>
@@ -117,6 +110,13 @@
 			<artifactId>mule-http-connector</artifactId>
 			<version>1.9.1</version>
 			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
+			<artifactId>race-data-system-api</artifactId>
+			<version>1.0.14</version>
+			<classifier>raml</classifier>
+			<type>zip</type>
 		</dependency>
 	</dependencies>
 	<repositories>
