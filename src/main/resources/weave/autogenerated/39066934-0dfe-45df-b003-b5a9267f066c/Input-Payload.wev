@@ -1,0 +1,20 @@
+%dw 2.0
+
+type auto_39066934_0dfe_45df_b003_b5a9267f066c_Input_Payload = {
+  raceId: String, 
+  racerId: String, 
+  data?: { _?: Any }, 
+  start: String, 
+  finish?: String, 
+  lap?: {
+    count: Number, 
+    start: String, 
+    finish?: String, 
+    _?: Any
+  }, 
+  time?: Number, 
+  "type"?: String, 
+  token?: String, 
+  _?: Any
+}
+

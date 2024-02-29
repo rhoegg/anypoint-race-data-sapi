@@ -5,19 +5,19 @@
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
-	<flow name="getRace" doc:id="5c72e95d-d18a-45f1-9741-c843e40bbd51" >
-		<choice doc:name="Choice" doc:id="cc2ee38e-a5b9-4fe7-96af-31ac6a5fa889" >
+	<flow name="getRace" doc:id="5c72e95d-d18a-45f1-9741-c843e40bbd51">
+		<choice doc:name="Choice" doc:id="cc2ee38e-a5b9-4fe7-96af-31ac6a5fa889">
 			<when expression='#[vars.raceType == "legacy"]'>
-				<set-variable value='#["race:$(vars.raceId)"]' doc:name="raceKey" doc:id="379735b4-fa5b-4b4f-a0cc-44a70b7d8e53" variableName="raceKey"/>
+				<set-variable value='#["race:$(vars.raceId)"]' doc:name="raceKey" doc:id="379735b4-fa5b-4b4f-a0cc-44a70b7d8e53" variableName="raceKey" />
 				<redis:get doc:name="raceKey" doc:id="8def59a5-efc0-4758-8f88-3ca7611aed5a" config-ref="redisConfig" key="#[vars.raceKey]" />
-				<logger level="DEBUG" doc:name="DEBUG" doc:id="acb7e23c-a9a4-4257-8d42-b9adeef347c2" message="#[payload]" category="race-data-sapi.getRace.legacy"/>
-				<raise-error doc:name="APP:NOT_SUPPORTED_YET" doc:id="935a2d63-31e5-4f70-80f7-d594cf217670" type="APP:NOT_SUPPORTED_YET" description="unsupported legacy race data requested"/>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="acb7e23c-a9a4-4257-8d42-b9adeef347c2" message="#[payload]" category="race-data-sapi.getRace.legacy" />
+				<raise-error doc:name="APP:NOT_SUPPORTED_YET" doc:id="935a2d63-31e5-4f70-80f7-d594cf217670" type="APP:NOT_SUPPORTED_YET" description="unsupported legacy race data requested" />
 			</when>
-			<otherwise >
+			<otherwise>
 				<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="482e2904-b5fd-4fc5-b07d-a93397363465" variableName="raceKey" />
-				<logger level="DEBUG" doc:name="DEBUG" doc:id="95e10b0a-d8d5-442c-98a2-2e6b88a7dfb8" message="race key: #[vars.raceKey]" category="race-data-sapi.getRace"/>
-				<redis:get-all-from-hash doc:name="raceKey" doc:id="d731132b-b59f-4b91-8a42-179d2f4adce3" config-ref="redisConfig" key="#[vars.raceKey]"/>
-				<logger level="DEBUG" doc:name="DEBUG" doc:id="98827bf1-8dac-4924-a99a-f635bd93e291" message="results: #[output application/json --- payload]" category="race-data-sapi.getRace"/>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="95e10b0a-d8d5-442c-98a2-2e6b88a7dfb8" message="race key: #[vars.raceKey]" category="race-data-sapi.getRace" />
+				<redis:get-all-from-hash doc:name="raceKey" doc:id="d731132b-b59f-4b91-8a42-179d2f4adce3" config-ref="redisConfig" key="#[vars.raceKey]" />
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="98827bf1-8dac-4924-a99a-f635bd93e291" message="results: #[output application/json --- payload]" category="race-data-sapi.getRace" />
 				<validation:is-false doc:name="empty payload" doc:id="f74bc9ed-dbaf-4b34-802b-bdfb0fa38632" expression="#[isEmpty(payload)]" message='#["$(vars.raceKey) not found"]'>
 					<error-mapping sourceType="VALIDATION:INVALID_BOOLEAN" targetType="APP:NOT_FOUND" />
 				</validation:is-false>
@@ -44,18 +44,33 @@ output application/json
 				</ee:transform>
 			</otherwise>
 		</choice>
-		<error-handler >
+		<error-handler>
 			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="b689e8a5-e82f-45d0-902c-d3800aa1a3b6" />
 		</error-handler>
 	</flow>
-	<flow name="setRace" doc:id="1e49818a-7246-43b9-a2f5-70fdbde1a777" >
+	<flow name="setRace" doc:id="1e49818a-7246-43b9-a2f5-70fdbde1a777">
 		<validation:is-false doc:name="raceType = legacy" doc:id="d13f65ec-116b-452b-8df9-60f21c709acf" expression='#[vars.raceType == "legacy"]' message="Legacy races are read only">
 			<error-mapping targetType="APP:FORBIDDEN" />
 		</validation:is-false>
 		<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="f48ae467-85f9-48ac-87f5-4fc846c99c61" variableName="raceKey" />
-		<ee:transform doc:name="to hash field array" doc:id="ddcb4385-0dcd-4d92-acf8-62e07f381002" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<flow-ref doc:name="storeRaceData" doc:id="45343d79-80dc-4179-8105-fe8291cc4a40" name="storeRaceData" target="storeResult" />
+		<choice doc:name="Choice" doc:id="0e7e15bf-32d4-48e1-a994-f8c4bb956140">
+			<when expression='#[isEmpty(vars.expiry)]'>
+				<flow-ref doc:name="updateScores" doc:id="218853f3-487d-4057-8640-ba2edf054bc4" name="updateScores" />
+			</when>
+			<otherwise>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="30879357-68aa-4548-9a2c-63ad114bca85" message="Skipping leaderboards for practice race" category="race-data-sapi.setRace" />
+			</otherwise>
+		</choice>
+		<set-payload value="OK" doc:name="OK " doc:id="d27b2cfb-50f5-4646-9809-44af8641d139" />
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="67a28bd1-6d6d-4d0f-99b7-214406561fe9" />
+		</error-handler>
+	</flow>
+	<sub-flow name="storeRaceData" doc:id="24e9af10-d4fe-406f-86af-073d2735069f">
+		<ee:transform doc:name="to hash field array" doc:id="ddcb4385-0dcd-4d92-acf8-62e07f381002">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 import * from dw::app::Transforms
 
 output application/json
@@ -75,23 +90,45 @@ output application/json
 } pluck (value, field) -> {field: field, value: value}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="DEBUG" doc:name="DEBUG" doc:id="568d5292-39ed-4dd4-9c5d-ff8273a5c64d" message="#[payload]" category="race-data-sapi.setRace"/>
-		<parallel-foreach doc:name="Parallel For Each" doc:id="90682b0c-cdbb-4ce5-9a1c-cd874e3a1ab5" >
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="568d5292-39ed-4dd4-9c5d-ff8273a5c64d" message="#[payload]" category="race-data-sapi.storeRaceData" />
+		<parallel-foreach doc:name="Parallel For Each" doc:id="90682b0c-cdbb-4ce5-9a1c-cd874e3a1ab5">
 			<redis:set-in-hash doc:name="raceKey" doc:id="b57172c1-5f24-4753-a0a3-ff7a48f978c0" config-ref="redisConfig" key="#[vars.raceKey]" field="#[payload.field]">
-				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
+				<redis:value><![CDATA[#[payload.value]]]></redis:value>
 			</redis:set-in-hash>
 		</parallel-foreach>
-		<choice doc:name="Choice" doc:id="72c48726-ad2a-421d-9be3-6784a85bd788" >
+		<choice doc:name="Choice" doc:id="72c48726-ad2a-421d-9be3-6784a85bd788">
 			<when expression="#[! isEmpty(vars.expiry)]">
-				<redis:expire doc:name="raceKey" doc:id="241d18d0-e7cb-44fb-a16d-6481277d215a" config-ref="redisConfig" key="#[vars.raceKey]" seconds="#[vars.expiry]"/>
+				<redis:expire doc:name="raceKey" doc:id="241d18d0-e7cb-44fb-a16d-6481277d215a" config-ref="redisConfig" key="#[vars.raceKey]" seconds="#[vars.expiry]" />
 			</when>
-			<otherwise >
-				<logger level="DEBUG" doc:name="DEBUG" doc:id="e79ea130-e077-4192-a808-0b061a3cb84f" message="Not expiring #[vars.raceKey]" category="race-data-sapi.setRace"/>
+			<otherwise>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="e79ea130-e077-4192-a808-0b061a3cb84f" message="Not expiring #[vars.raceKey]" category="race-data-sapi.storeRaceData" />
 			</otherwise>
 		</choice>
-		<set-payload value="OK" doc:name="OK" doc:id="d27b2cfb-50f5-4646-9809-44af8641d139" />
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="false" doc:name="On Error Propagate" doc:id="67a28bd1-6d6d-4d0f-99b7-214406561fe9" />
-		</error-handler>
-	</flow>
+	</sub-flow>
+	<sub-flow name="updateScores" doc:id="39066934-0dfe-45df-b003-b5a9267f066c">
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="8497d4dd-06b3-4bb6-96e3-71b34c2cde5e" message="updating scores for #[vars.raceKey]" category="race-data-sapi.updateScores"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="88d0dc43-d760-4549-a25d-4977b4af2294" message="#[payload]" category="race-data-sapi.updateScores"/>
+		<set-variable value='#[output application/json&#10;---&#10;vars.raceType match {&#10;	case "rest-api" -&gt; payload.data.laps match {&#10;		case 1 -&gt; "racer"&#10;		case 100 -&gt; "lap100"&#10;		else -&gt; "invalid"&#10;	}&#10;	case "1brc" -&gt; payload.data.count match {&#10;		case 1000 -&gt; "average1k"&#10;		case 1000000 -&gt; "average1m"&#10;		case 1000000000 -&gt; "average1b"&#10;		else -&gt; "invalid"&#10;	}&#10;	else -&gt; "invalid"&#10;}]' doc:name="leaderboard" doc:id="596151bb-5cbb-4ab7-aac8-77833661a214" variableName="leaderboard" />
+		<try doc:name="Try" doc:id="8baac81d-8da3-49de-8434-834d7db36fc4">
+			<set-variable value='#[["daily", "weekly", "season"]]' doc:name="timespans" doc:id="cc184499-7bd4-4b9d-b049-279d46e70085" variableName="timespans" />
+			<foreach doc:name="For Each" doc:id="1749d7ce-dbef-4253-804d-635302293080" collection="#[vars.timespans]">
+				<set-variable value="#[payload]" doc:name="timespan" doc:id="4329d123-f3d3-406a-99b1-4ce63232fd71" variableName="timespan" />
+				<set-payload value="#[vars.rootMessage.payload]" doc:name="Set Payload" doc:id="ca4c8578-96bf-436f-bf43-9f1077103a0c" />
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="539cf9e8-6741-4543-aeb8-f5f80bfb478b" message="Updating #[vars.timespan] leaderboard " category="race-data-sapi.updateScores"/>
+				<flow-ref doc:name="recordLeaderboardScore" doc:id="90966c33-a453-40b8-af6f-dffc8623dac4" name="recordLeaderboardScore" />
+			</foreach>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="35b00ee9-8c93-43aa-8b1c-82b585d8aeb4" >
+					<logger level="WARN" doc:name="WARN" doc:id="91594401-fe6d-4173-84f2-cf58f4eb1754" message="Error updating leaderboards for #[vars.raceKey]" category="race-data-sapi.updateScores"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="recordLeaderboardScore" doc:id="8b7aa3f6-fcbf-4417-ba7c-c6fc939ddb0d" >
+		<set-variable value='#[output text/plain --- "leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="bbb8617e-0d11-42a5-bca7-33d81931ff0d" variableName="leaderboardKey"/>
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="25eebb0b-358a-41ea-87b1-6fabf55faf35" message="Adding score to #[vars.leaderboardKey] for #[vars.raceKey]" category="race-data-sapi.recordLeaderboardScore"/>
+		<redis:add-to-sorted-set doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="50ecc01a-dba0-4174-82af-1aa16e67fa64" config-ref="redisConfig" key="#[vars.leaderboardKey]" score="#[payload.time]" mustSucceed="true">
+			<redis:value ><![CDATA[#[vars.raceKey]]]></redis:value>
+		</redis:add-to-sorted-set>
+	</sub-flow>
 </mule>
