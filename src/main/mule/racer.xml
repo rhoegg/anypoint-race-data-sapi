@@ -44,6 +44,9 @@ output application/json
 				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
 			</redis:set-in-hash>
 		</parallel-foreach>
+		<redis:add-to-set doc:name="season3:racers" doc:id="215ec890-f975-47f4-bc7c-8a3509f79d24" config-ref="redisConfig" key="season3:racers" target="racersResult">
+			<redis:value ><![CDATA[#[vars.racerId]]]></redis:value>
+		</redis:add-to-set>
 		<ee:transform doc:name="response" doc:id="188ef256-877a-47bf-89a6-5af3078b23b4" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0

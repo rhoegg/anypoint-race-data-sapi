@@ -68,6 +68,7 @@ output application/json
 		</error-handler>
 	</flow>
 	<sub-flow name="storeRaceData" doc:id="24e9af10-d4fe-406f-86af-073d2735069f">
+		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="e53bc05e-7651-436a-8438-40e3218ff707" variableName="racerId"/>
 		<ee:transform doc:name="to hash field array" doc:id="ddcb4385-0dcd-4d92-acf8-62e07f381002">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -91,11 +92,14 @@ output application/json
 			</ee:message>
 		</ee:transform>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="568d5292-39ed-4dd4-9c5d-ff8273a5c64d" message="#[payload]" category="race-data-sapi.storeRaceData" />
-		<parallel-foreach doc:name="Parallel For Each" doc:id="90682b0c-cdbb-4ce5-9a1c-cd874e3a1ab5">
+		<parallel-foreach doc:name="Parallel For Each" doc:id="90682b0c-cdbb-4ce5-9a1c-cd874e3a1ab5" target="hsetResult">
 			<redis:set-in-hash doc:name="raceKey" doc:id="b57172c1-5f24-4753-a0a3-ff7a48f978c0" config-ref="redisConfig" key="#[vars.raceKey]" field="#[payload.field]">
 				<redis:value><![CDATA[#[payload.value]]]></redis:value>
 			</redis:set-in-hash>
 		</parallel-foreach>
+		<redis:add-to-set doc:name="races:{racerId}" doc:id="81502aea-5b6b-47d3-b43f-27872cea1792" config-ref="redisConfig" key='#["races:$(vars.racerId)"]' target="saddResult">
+			<redis:value ><![CDATA[#[vars.raceKey]]]></redis:value>
+		</redis:add-to-set>
 		<choice doc:name="Choice" doc:id="72c48726-ad2a-421d-9be3-6784a85bd788">
 			<when expression="#[! isEmpty(vars.expiry)]">
 				<redis:expire doc:name="raceKey" doc:id="241d18d0-e7cb-44fb-a16d-6481277d215a" config-ref="redisConfig" key="#[vars.raceKey]" seconds="#[vars.expiry]" />
@@ -128,7 +132,7 @@ output application/json
 		<set-variable value='#[output text/plain --- "leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="bbb8617e-0d11-42a5-bca7-33d81931ff0d" variableName="leaderboardKey"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="25eebb0b-358a-41ea-87b1-6fabf55faf35" message="Adding score to #[vars.leaderboardKey] for #[vars.raceKey]" category="race-data-sapi.recordLeaderboardScore"/>
 		<redis:add-to-sorted-set doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="50ecc01a-dba0-4174-82af-1aa16e67fa64" config-ref="redisConfig" key="#[vars.leaderboardKey]" score="#[payload.time]" mustSucceed="true">
-			<redis:value ><![CDATA[#[vars.raceKey]]]></redis:value>
+			<redis:value ><![CDATA[#[payload.racerId]]]></redis:value>
 		</redis:add-to-sorted-set>
 	</sub-flow>
 </mule>
