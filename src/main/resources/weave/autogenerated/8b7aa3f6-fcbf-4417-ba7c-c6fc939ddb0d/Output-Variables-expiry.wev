@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_8b7aa3f6_fcbf_4417_ba7c_c6fc939ddb0d_Output_Variables_expiry = Number | Null
+

@@ -53,6 +53,7 @@ output application/json
 			<error-mapping targetType="APP:FORBIDDEN" />
 		</validation:is-false>
 		<set-variable value='#["race:$(vars.raceType):$(vars.raceId)"]' doc:name="raceKey" doc:id="f48ae467-85f9-48ac-87f5-4fc846c99c61" variableName="raceKey" />
+		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="e53bc05e-7651-436a-8438-40e3218ff707" variableName="racerId" />
 		<flow-ref doc:name="storeRaceData" doc:id="45343d79-80dc-4179-8105-fe8291cc4a40" name="storeRaceData" target="storeResult" />
 		<choice doc:name="Choice" doc:id="0e7e15bf-32d4-48e1-a994-f8c4bb956140">
 			<when expression='#[isEmpty(vars.expiry)]'>
@@ -68,7 +69,6 @@ output application/json
 		</error-handler>
 	</flow>
 	<sub-flow name="storeRaceData" doc:id="24e9af10-d4fe-406f-86af-073d2735069f">
-		<set-variable value="#[payload.racerId]" doc:name="racerId" doc:id="e53bc05e-7651-436a-8438-40e3218ff707" variableName="racerId"/>
 		<ee:transform doc:name="to hash field array" doc:id="ddcb4385-0dcd-4d92-acf8-62e07f381002">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -130,9 +130,19 @@ output application/json
 	</sub-flow>
 	<sub-flow name="recordLeaderboardScore" doc:id="8b7aa3f6-fcbf-4417-ba7c-c6fc939ddb0d" >
 		<set-variable value='#[output text/plain --- "leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="bbb8617e-0d11-42a5-bca7-33d81931ff0d" variableName="leaderboardKey"/>
+		<set-variable value='#[output text/plain --- "personal:$(vars.racerId):$(vars.leaderboard):$(vars.timespan)"]' doc:name="personalResultsKey" doc:id="b8d54f65-8eab-4450-9a32-3db57c9b3e18" variableName="personalResultsKey"/>
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="25eebb0b-358a-41ea-87b1-6fabf55faf35" message="Adding score to #[vars.leaderboardKey] for #[vars.raceKey]" category="race-data-sapi.recordLeaderboardScore"/>
-		<redis:add-to-sorted-set doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="50ecc01a-dba0-4174-82af-1aa16e67fa64" config-ref="redisConfig" key="#[vars.leaderboardKey]" score="#[payload.time]" mustSucceed="true">
-			<redis:value ><![CDATA[#[payload.racerId]]]></redis:value>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="bbd84e28-c683-47a6-925b-d84a46c04ba8" >
+			<route >
+				<redis:add-to-sorted-set doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="50ecc01a-dba0-4174-82af-1aa16e67fa64" config-ref="redisConfig" key="#[vars.leaderboardKey]" score="#[payload.time]" mustSucceed="true">
+			<redis:value><![CDATA[#[payload.racerId]]]></redis:value>
 		</redis:add-to-sorted-set>
+			</route>
+			<route >
+				<redis:add-to-sorted-set doc:name="personal:{racerId}:{leaderboard}:{timespan}" doc:id="26393a90-5fe1-44cf-b841-7cfd567d6900" config-ref="redisConfig" key="#[vars.personalResultsKey]" score="#[payload.time]">
+					<redis:value ><![CDATA[#[vars.raceKey]]]></redis:value>
+				</redis:add-to-sorted-set>
+			</route>
+		</scatter-gather>
 	</sub-flow>
 </mule>
