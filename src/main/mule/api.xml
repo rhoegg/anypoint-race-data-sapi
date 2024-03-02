@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.0.14:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.1.0:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -145,8 +145,8 @@ output application/json
     <flow name="put:\races\(raceType)\(id):application\json:race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.raceType]" doc:name="raceType" doc:id="4eb14fbf-abd3-4839-930e-59f026c2092c" variableName="raceType" />
         <set-variable value="#[attributes.uriParams.id]" doc:name="raceId" doc:id="e722ff76-5212-484f-8c33-ee2cabefd428" variableName="raceId" />
-        <set-variable value="#[attributes.queryParams.expiry]" doc:name="expiry" doc:id="5a942262-22a4-4eab-97e4-b8d92e5a2eb5" variableName="expiry"/>
-		<flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace" />
+        <set-variable value="#[attributes.queryParams.expiry]" doc:name="expiry" doc:id="5a942262-22a4-4eab-97e4-b8d92e5a2eb5" variableName="expiry" />
+        <flow-ref doc:name="setRace" doc:id="60ca3c2e-86c3-4e29-8bab-68efacb4538a" name="setRace" />
         <logger level="INFO" doc:name="INFO" doc:id="e74a6309-342a-43b2-9415-84fcb5209142" message="#[&quot;Wrote race $(vars.raceType):$(vars.raceId)&quot;]" category="race-data-sapi.api" />
     </flow>
     <flow name="get:\racers:race-data-system-api-config">
@@ -165,5 +165,10 @@ output application/json
         <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a0313688-3c6b-4de0-b9b3-7c5f1e12d02d" variableName="racerId" />
         <flow-ref doc:name="updateRacer" doc:id="774ad10f-7a51-418a-86dd-c0008a3244a9" name="updateRacer" />
         <logger level="INFO" doc:name="INFO" doc:id="60a98167-4a4e-4166-808e-a6c3b997ea9c" message="Updated racer #[vars.racerId]" category="race-data-sapi.api" />
+    </flow>
+    <flow name="get:\leaderboard\(id):race-data-system-api-config">
+		<set-variable value="#[attributes.uriParams.id]" doc:name="leaderboard" doc:id="0732fd1a-4e7d-4eec-92c3-41630eeb6093" variableName="leaderboard"/>
+		<set-variable value='#[attributes.queryParams.timespan default "season"]' doc:name="timespan" doc:id="134b2076-444f-4a8e-8e27-8daecc010314" variableName="timespan"/>
+		<flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard"/>
     </flow>
 </mule>

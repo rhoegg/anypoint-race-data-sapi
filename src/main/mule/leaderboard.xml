@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="getLeaderboard" doc:id="be7b2a1e-09fb-4c52-952d-eab86d1de4ed" >
+		<set-variable value='#["leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="87bb225c-e1e2-4e72-b17f-0269ccf950ce" variableName="leaderboardKey"/>
+		<redis:get-range-by-index doc:name="racerIds" doc:id="a12ebe1e-7e7d-45bb-9e3c-6f16dec9e85f" config-ref="redisConfig" key="#[vars.leaderboardKey]" start="0" end="100"/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="0948fb41-3b1e-4453-b4ad-9bf9ece70632" >
+			<scatter-gather doc:name="Scatter-Gather" doc:id="93ab2fde-8633-4fb2-87a7-730ce7c8ab27" >
+				<route >
+					<ee:transform doc:name="personal sorted set key" doc:id="ccf9e3da-fb03-4da1-a2b0-2c9237fb1579">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+"personal:$(payload):$(vars.leaderboard):$(vars.timespan)"]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+					<logger level="DEBUG" doc:name="DEBUG" doc:id="ab40ff9a-098b-438f-b3ff-ae5a98e4de2e" message="#[payload]" category="race-data-sapi.leaderboard"/>
+					<redis:get-range-by-index doc:name="top 1 for racer" doc:id="9436f4e5-b456-42e8-bcfb-36ab4d5e9ff3" config-ref="redisConfig" key="#[payload]" start="0" end="0" />
+					<logger level="DEBUG" doc:name="DEBUG1" doc:id="2daa2285-6ba7-420a-b5c5-547405b95f0e" message="#[payload]" category="race-data-sapi.leaderboard" />
+					<redis:get-all-from-hash doc:name="race info" doc:id="c17eac2e-db5e-4c25-8bad-0315a514e622" config-ref="redisConfig" key="#[payload[0]]"/>
+					<logger level="DEBUG" doc:name="DEBUG2" doc:id="3821fb5e-4824-4abe-a223-a1f4c1809631" message="#[payload]" category="race-data-sapi.leaderboard" />
+				</route>
+				<route >
+					<redis:get-all-from-hash doc:name="racer" doc:id="12ae3126-b60d-4a0b-bf4e-62d1c26fddd1" config-ref="redisConfig" key='#["racerprofile:$(payload)"]'/>
+				</route>
+			</scatter-gather>
+		</parallel-foreach>
+		<ee:transform doc:name="response" doc:id="061ada4a-0db6-4e3c-8ebf-44abb752d7ea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+payload map (result, index) -> do {
+	var race = result.payload."0".payload
+	var racer = result.payload."1".payload
+	---
+	{
+		raceId: race.raceid,
+		racerId: racer.racerId,
+		name: racer.name,
+		start: fromRedisDate(race.start),
+		rank: index + 1,
+		time: race.time as Number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
