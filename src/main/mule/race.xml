@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 	<flow name="getRace" doc:id="5c72e95d-d18a-45f1-9741-c843e40bbd51">
 		<choice doc:name="Choice" doc:id="cc2ee38e-a5b9-4fe7-96af-31ac6a5fa889">
 			<when expression='#[vars.raceType == "legacy"]'>
@@ -142,6 +143,30 @@ output application/json
 				<redis:add-to-sorted-set doc:name="personal:{racerId}:{leaderboard}:{timespan}" doc:id="26393a90-5fe1-44cf-b841-7cfd567d6900" config-ref="redisConfig" key="#[vars.personalResultsKey]" score="#[payload.time]">
 					<redis:value ><![CDATA[#[vars.raceKey]]]></redis:value>
 				</redis:add-to-sorted-set>
+			</route>
+		</scatter-gather>
+		<choice doc:name="Choice" doc:id="01cb3a71-777b-43ad-8c0a-23c8337df164">
+			<when expression='#["daily" == vars.timespan]'>
+				<set-variable value="#[import * from dw::app::Transforms&#10;output application/java&#10;---&#10;toUnixTime(tomorrowAtMidnight())]" doc:name="expiration at midnight" doc:id="68dcc495-ea4d-4006-8e47-a1d2f574f6fb" variableName="expiration"/>
+				<flow-ref doc:name="expireLeaderboards" doc:id="3bf81871-e4e6-4649-a7d5-1453bdd0d61c" name="expireLeaderboards" />
+			</when>
+			<when expression='#["weekly" == vars.timespan]'>
+				<set-variable value="#[import * from dw::app::Transforms&#10;output application/java&#10;---&#10;toUnixTime(nextSundayMidnight())]" doc:name="expiration saturday at midnight" doc:id="002ff869-9043-4511-a394-b30cba4378c0" variableName="expiration"/>
+				<flow-ref doc:name="expireLeaderboards" doc:id="80db02f0-6c00-4034-8f3b-7d8a80aa77d7" name="expireLeaderboards"/>
+			</when>
+			<otherwise>
+				<logger level="TRACE" doc:name="TRACE" doc:id="48f2653e-770d-41c3-863f-bf4545f40674" message="Not expiring season leaderboard" category="race-data-sapi.recordLeaderboardScore" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="expireLeaderboards" doc:id="23315cf6-1a1c-4385-9ed2-c98bf3102ce0" >
+		<logger level="DEBUG" doc:name="DEBUG" doc:id="d86f451e-a4ed-4ffa-b088-1c104d990130" message="Expiring #[vars.timespan] leaderboards at #[dw::app::Transforms::fromUnixTime(vars.expiration)]" category="race-data-sapi.recordLeaderboardScore"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="62a42057-e544-4b38-b1ee-868e8db150cf" >
+			<route >
+				<redis:expire-at unixTime="#[vars.expiration]" doc:name="leaderboardKey" doc:id="765702fb-f9f9-429e-b0db-387da4117616" config-ref="redisConfig" key="#[vars.leaderboardKey]"/>
+			</route>
+			<route >
+				<redis:expire-at unixTime="#[vars.expiration]" doc:name="personalResultsKey" doc:id="85fc289a-de38-46fa-8330-8eb587be86b6" config-ref="redisConfig" key="#[vars.personalResultsKey]"/>
 			</route>
 		</scatter-gather>
 	</sub-flow>

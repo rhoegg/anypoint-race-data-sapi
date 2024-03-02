@@ -19,14 +19,21 @@ output text/plain
 "personal:$(payload):$(vars.leaderboard):$(vars.timespan)"]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-					<logger level="DEBUG" doc:name="DEBUG" doc:id="ab40ff9a-098b-438f-b3ff-ae5a98e4de2e" message="#[payload]" category="race-data-sapi.leaderboard"/>
+					<logger level="DEBUG" doc:name="DEBUG" doc:id="ab40ff9a-098b-438f-b3ff-ae5a98e4de2e" message='#[output text/plain --- "retrieving $(payload)"]' category="race-data-sapi.leaderboard"/>
 					<redis:get-range-by-index doc:name="top 1 for racer" doc:id="9436f4e5-b456-42e8-bcfb-36ab4d5e9ff3" config-ref="redisConfig" key="#[payload]" start="0" end="0" />
-					<logger level="DEBUG" doc:name="DEBUG1" doc:id="2daa2285-6ba7-420a-b5c5-547405b95f0e" message="#[payload]" category="race-data-sapi.leaderboard" />
 					<redis:get-all-from-hash doc:name="race info" doc:id="c17eac2e-db5e-4c25-8bad-0315a514e622" config-ref="redisConfig" key="#[payload[0]]"/>
-					<logger level="DEBUG" doc:name="DEBUG2" doc:id="3821fb5e-4824-4abe-a223-a1f4c1809631" message="#[payload]" category="race-data-sapi.leaderboard" />
 				</route>
 				<route >
-					<redis:get-all-from-hash doc:name="racer" doc:id="12ae3126-b60d-4a0b-bf4e-62d1c26fddd1" config-ref="redisConfig" key='#["racerprofile:$(payload)"]'/>
+					<ee:transform doc:name="racer key" doc:id="3f69d23a-0caa-4399-b402-387e798f95b7" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+"racerprofile:$(payload)"]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="DEBUG" doc:name="DEBUG" doc:id="ea0891fd-2dcd-4537-9532-ab4b29554097" message='#[output text/plain --- "retrieving $(payload)"]' category="race-data-sapi.leaderboard" />
+					<redis:get-all-from-hash doc:name="racer" doc:id="12ae3126-b60d-4a0b-bf4e-62d1c26fddd1" config-ref="redisConfig" key='#[payload]'/>
 				</route>
 			</scatter-gather>
 		</parallel-foreach>
