@@ -50,9 +50,10 @@ output application/json
 		<ee:transform doc:name="response" doc:id="188ef256-877a-47bf-89a6-5af3078b23b4" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
+import mergeWith from dw::core::Objects
 output application/json
 ---
-payload ++ {
+payload mergeWith {
 	racerId: vars.racerId
 }]]></ee:set-payload>
 			</ee:message>
