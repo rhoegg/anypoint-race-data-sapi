@@ -1,0 +1,28 @@
+%dw 2.0
+
+type auto_08f2af47_7a95_406e_a9bb_fbc688ff1234_Input_Attributes = {|
+  clientCertificate?: {|
+    publicKey?: {|  |}, 
+    "type"?: String, 
+    encoded?: Binary
+  |}, 
+  headers: {|  |}, 
+  listenerPath: String, 
+  method: String, 
+  queryParams: {|
+    timespan?: "daily" | "season" | "weekly", 
+    minRank?: Number, 
+    racerId?: String, 
+    count?: Number
+  |}, 
+  queryString: String, 
+  relativePath: String, 
+  remoteAddress: String, 
+  requestPath: String, 
+  requestUri: String, 
+  scheme: String, 
+  uriParams: {| id: String |}, 
+  version: String, 
+  localAddress: String
+|}
+

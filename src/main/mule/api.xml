@@ -169,6 +169,14 @@ output application/json
     <flow name="get:\leaderboard\(id):race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.id]" doc:name="leaderboard" doc:id="0732fd1a-4e7d-4eec-92c3-41630eeb6093" variableName="leaderboard" />
         <set-variable value="#[attributes.queryParams.timespan default &quot;season&quot;]" doc:name="timespan" doc:id="134b2076-444f-4a8e-8e27-8daecc010314" variableName="timespan" />
-        <flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard" />
+        <choice doc:name="Choice" doc:id="3ec5dd47-27e9-4e6d-a90d-51151c039173" >
+			<when expression="#[attributes.queryParams.racerId?]">
+				<set-variable value="#[attributes.queryParams.racerId]" doc:name="racerId" doc:id="1324fd61-42c3-4c6d-b01a-966ef71522f0" variableName="racerId"/>
+				<flow-ref doc:name="getRacerResults" doc:id="fe1a38e8-bbc5-4dec-abd1-b79aab2799d8" name="getRacerResults"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard" />
+			</otherwise>
+		</choice>
     </flow>
 </mule>
