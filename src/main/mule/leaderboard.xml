@@ -47,6 +47,7 @@ payload map (result, index) -> do {
 	var race = result.payload."0".payload
 	var racer = result.payload."1".payload
 	---
+	if(index >= (vars.minRank - 1) and index <= (vars.count + vars.minRank -1) )
 	{
 		raceId: race.raceid,
 		racerId: racer.racerId,
@@ -54,10 +55,69 @@ payload map (result, index) -> do {
 		start: fromRedisDate(race.start),
 		rank: index + 1,
 		time: race.time as Number
-	}
+	}else null
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
-	<sub-flow name="getRacerResults" doc:id="08f2af47-7a95-406e-a9bb-fbc688ff1234" />
+	<sub-flow name="getRacerResults" doc:id="08f2af47-7a95-406e-a9bb-fbc688ff1234" >
+		<set-variable value='#["leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="3180b1a7-34e7-4311-8021-c083f3520c13" variableName="leaderboardKey" />
+		<set-variable value="#[[]]" doc:name="races" doc:id="0b5b7135-a843-4858-9897-1a8bb7f2b402" variableName="races"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="7e111341-3a76-4439-8db2-a1358292f672" >
+			<route >
+				<ee:transform doc:name="personal sorted set key" doc:id="38f674c0-9b81-4d2d-8dbd-27d08b4c9135" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+"personal:$(vars.racerId):$(vars.leaderboard):$(vars.timespan)"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="2fd35645-75fd-44c3-950d-5961d1e88bf8" message='#[output text/plain --- "retrieving $(payload)"]' category="race-data-sapi.leaderboard" />
+				<redis:get-range-by-index doc:name="top 1 for racer" doc:id="69e130f5-8c61-4ae4-8b09-726187cf1650" config-ref="redisConfig" key="#[payload]" start="#[vars.minRank - 1]" end="#[vars.count + vars.minRank - 1]" />
+				<foreach doc:name="For Each race" doc:id="cecbbff9-9fe2-4fa0-98d8-43cab62ab38a" >
+					<redis:get-all-from-hash doc:name="race info" doc:id="3ff4fb02-9761-41ec-961f-9fd3559d8f6e" config-ref="redisConfig" key="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="4e696c7e-e928-4c14-b2b3-35407da97048" >
+						<ee:message >
+						</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="races" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.races + payload]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</foreach>
+				<logger level="INFO" doc:name="Logger1" doc:id="6c04c2c5-4498-42eb-8c8d-7f1b4064d50b" message="#[output application/json&#10;---&#10;payload]" />
+			</route>
+			<route >
+				<ee:transform doc:name="racer key" doc:id="040f6b3a-f56a-4741-be63-dca45db116a0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+"racerprofile:$(vars.racerId)"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="9ac23067-c452-4f91-9c23-0a6ce7ad106c" message='#[output text/plain --- "retrieving $(payload)"]' category="race-data-sapi.leaderboard" />
+				<redis:get-all-from-hash doc:name="racer" doc:id="5e01fc6a-74a0-4507-b849-42d21bde343f" config-ref="redisConfig" key="#[payload]" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="response" doc:id="8aec66b9-2d8c-4162-b96b-3b49b425de34" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+vars.races map (race,index)->{	
+	raceId: race.raceid,
+	racerId: payload."1".payload.racerId,
+	name: payload."1".payload.name,
+	rank: index + 1,
+	start: fromRedisDate(race.start),
+	time: race.time as Number
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
 </mule>
