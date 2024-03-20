@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/re
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="getLeaderboard" doc:id="be7b2a1e-09fb-4c52-952d-eab86d1de4ed" >
 		<set-variable value='#["leaderboard:$(vars.leaderboard):$(vars.timespan)"]' doc:name="leaderboardKey" doc:id="87bb225c-e1e2-4e72-b17f-0269ccf950ce" variableName="leaderboardKey"/>
-		<redis:get-range-by-index doc:name="racerIds" doc:id="a12ebe1e-7e7d-45bb-9e3c-6f16dec9e85f" config-ref="redisConfig" key="#[vars.leaderboardKey]" start="0" end="100"/>
+		<redis:get-range-by-index doc:name="racerIds" doc:id="a12ebe1e-7e7d-45bb-9e3c-6f16dec9e85f" config-ref="redisConfig" key="#[vars.leaderboardKey]" end="#[vars.count + vars.minRank - 1]" start="#[vars.minRank - 1]"/>
 		<parallel-foreach doc:name="Parallel For Each" doc:id="0948fb41-3b1e-4453-b4ad-9bf9ece70632" >
 			<scatter-gather doc:name="Scatter-Gather" doc:id="93ab2fde-8633-4fb2-87a7-730ce7c8ab27" >
 				<route >
@@ -43,20 +43,20 @@ output text/plain
 import * from dw::app::Transforms
 output application/json
 ---
-payload map (result, index) -> do {
+(payload map (result, index) -> do {
 	var race = result.payload."0".payload
 	var racer = result.payload."1".payload
 	---
-	if(index >= (vars.minRank - 1) and index <= (vars.count + vars.minRank -1) )
 	{
 		raceId: race.raceid,
 		racerId: racer.racerId,
 		name: racer.name,
 		start: fromRedisDate(race.start),
-		rank: index + 1,
+		rank: vars.minRank + index,
 		time: race.time as Number
-	}else null
-}]]></ee:set-payload>
+	}
+}
+) default [ ]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
