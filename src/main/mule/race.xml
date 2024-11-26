@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
-http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
 	<flow name="getRace" doc:id="5c72e95d-d18a-45f1-9741-c843e40bbd51">
 		<choice doc:name="Choice" doc:id="cc2ee38e-a5b9-4fe7-96af-31ac6a5fa889">
 			<when expression='#[vars.raceType == "legacy"]'>
@@ -135,9 +136,9 @@ output application/json
 		<logger level="DEBUG" doc:name="DEBUG" doc:id="25eebb0b-358a-41ea-87b1-6fabf55faf35" message="Adding score to #[vars.leaderboardKey] for #[vars.raceKey]" category="race-data-sapi.recordLeaderboardScore"/>
 		<scatter-gather doc:name="Scatter-Gather" doc:id="bbd84e28-c683-47a6-925b-d84a46c04ba8" >
 			<route >
-				<redis:add-to-sorted-set doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="50ecc01a-dba0-4174-82af-1aa16e67fa64" config-ref="redisConfig" key="#[vars.leaderboardKey]" score="#[payload.time]" mustSucceed="true">
-			<redis:value><![CDATA[#[payload.racerId]]]></redis:value>
-		</redis:add-to-sorted-set>
+				<lettuce:zadd doc:name="leaderboard:{leaderboard}:{timespan}" doc:id="01b82916-edbb-41ec-ba9b-dc4a0f994c88" key="#[vars.leaderboardKey]" lt="true" config-ref="Lettuce_Redis_Config">
+					<lettuce:member-scores ><![CDATA[#[{(payload.racerId): payload.time}]]]></lettuce:member-scores>
+				</lettuce:zadd>
 			</route>
 			<route >
 				<redis:add-to-sorted-set doc:name="personal:{racerId}:{leaderboard}:{timespan}" doc:id="26393a90-5fe1-44cf-b841-7cfd567d6900" config-ref="redisConfig" key="#[vars.personalResultsKey]" score="#[payload.time]">

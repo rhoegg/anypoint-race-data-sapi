@@ -9,8 +9,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<app.runtime>4.5.3</app.runtime>
-		<mule.maven.plugin.version>4.0.0</mule.maven.plugin.version>
+		<app.runtime>4.8.0</app.runtime>
+		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
 		<munit.version>3.0.0</munit.version>
 	</properties>
 	<build>
@@ -94,12 +94,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>com.mulesoft.services</groupId>
-			<artifactId>mule-service-weave-ee</artifactId>
-			<version>2.4.0-20221212</version>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
 			<version>1.10.3</version>
@@ -112,9 +106,15 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
+			<groupId>cloud.anypoint</groupId>
+			<artifactId>mule-lettuce-redis-connector</artifactId>
+			<version>0.1.22</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
 			<groupId>ae6d7954-6fc2-4f3e-8777-80ff8aabd859</groupId>
 			<artifactId>race-data-system-api</artifactId>
-			<version>1.1.1</version>
+			<version>1.2.2</version>
 			<classifier>raml</classifier>
 			<type>zip</type>
 		</dependency>

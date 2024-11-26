@@ -1,9 +1,11 @@
 %dw 2.0
 
 type auto_fe9eb56e_0b7b_4776_8783_1e3be2bd9836_Output_Payload = {
+  lastUpdated?: String, 
   racerId?: String, 
   clientId: String, 
   displayName: String, 
+  baseUri?: String, 
   email: String, 
   _?: Any
 }

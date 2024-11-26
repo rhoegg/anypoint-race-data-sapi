@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
-http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
 	<configuration-properties doc:name="Configuration properties" doc:id="8c05427f-98d0-4417-88ac-e24f09e6d6f3" file="config/${mule.env}.yaml" />
 	<global-property doc:name="Global Property" doc:id="c9c83d2a-2add-4856-bd01-59f7521165a4" name="mule.env" value="local" />
     <http:listener-config name="race-data-system-api-httpListenerConfig">
@@ -20,4 +21,7 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 		</redis:nonclustered-connection>
 	</redis:redis-config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="9eb514ba-846a-44ce-a1fb-269facfa4d29" flowRef="race-data-system-api-main" />
+	<lettuce:config name="Lettuce_Redis_Config" doc:name="Lettuce Redis Config" doc:id="103e2ee0-257a-40dc-9079-d80b491d70ab" >
+		<lettuce:connection host="${redis.host}" port="${redis.port}" password="${redis.password}"/>
+	</lettuce:config>
 </mule>

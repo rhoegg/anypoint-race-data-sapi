@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.1.1:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:1.2.2:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -151,7 +151,23 @@ output application/json
     </flow>
     <flow name="get:\racers:race-data-system-api-config">
         <set-variable value="#[attributes.queryParams.clientId]" doc:name="clientId" doc:id="955005f5-7eba-4c8c-b6b0-3a3a9b2c58f7" variableName="clientId" />
-        <flow-ref doc:name="searchRacersByClientId" doc:id="6fdd4bf0-0619-421b-ba95-8e87b659fe03" name="searchRacersByClientId" />
+        <set-variable value='#[attributes.queryParams.result default "id"]' doc:name="result" doc:id="96cc3f95-adb4-463e-927b-ba15115cf7aa" variableName="result"/>
+		<choice doc:name="Choice" doc:id="2f06e583-afc0-43ba-8231-c60330234677" >
+			<when expression="#[null != vars.clientId]">
+				<flow-ref doc:name="searchRacersByClientId" doc:id="6fdd4bf0-0619-421b-ba95-8e87b659fe03" name="searchRacersByClientId" />
+			</when>
+			<otherwise >
+				<flow-ref doc:name="searchAllRacers" doc:id="7c067df6-e33d-47ed-a874-dfaa4c111a58" name="searchAllRacers"/>
+			</otherwise>
+		</choice>
+		<choice doc:name="Choice" doc:id="faf40267-9876-41b9-af14-da509a8dc4f1" >
+			<when expression='#["profile" == vars.result]'>
+				<flow-ref doc:name="getRacers" doc:id="f499596e-93b5-4055-892d-69dff62d95b9" name="getRacers"/>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="DEBUG" doc:id="8a619d2b-7d26-4ecd-a15f-7d2c642051b8" message='#["requested result is $(vars.result)"]'/>
+			</otherwise>
+		</choice>
     </flow>
     <flow name="post:\racers:application\json:race-data-system-api-config">
         <flow-ref doc:name="createRacer" doc:id="929c7284-2e74-4de4-b64a-1f9a187fd919" name="createRacer" />
@@ -169,14 +185,14 @@ output application/json
     <flow name="get:\leaderboard\(id):race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.id]" doc:name="leaderboard" doc:id="0732fd1a-4e7d-4eec-92c3-41630eeb6093" variableName="leaderboard" />
         <set-variable value="#[attributes.queryParams.timespan default &quot;season&quot;]" doc:name="timespan" doc:id="134b2076-444f-4a8e-8e27-8daecc010314" variableName="timespan" />
-        <choice doc:name="Choice" doc:id="3ec5dd47-27e9-4e6d-a90d-51151c039173" >
-			<when expression="#[attributes.queryParams.racerId?]">
-				<set-variable value="#[attributes.queryParams.racerId]" doc:name="racerId" doc:id="1324fd61-42c3-4c6d-b01a-966ef71522f0" variableName="racerId"/>
-				<flow-ref doc:name="getRacerResults" doc:id="fe1a38e8-bbc5-4dec-abd1-b79aab2799d8" name="getRacerResults"/>
-			</when>
-			<otherwise >
-				<flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard" />
-			</otherwise>
-		</choice>
+        <choice doc:name="Choice" doc:id="3ec5dd47-27e9-4e6d-a90d-51151c039173">
+            <when expression="#[attributes.queryParams.racerId?]">
+                <set-variable value="#[attributes.queryParams.racerId]" doc:name="racerId" doc:id="1324fd61-42c3-4c6d-b01a-966ef71522f0" variableName="racerId" />
+                <flow-ref doc:name="getRacerResults" doc:id="fe1a38e8-bbc5-4dec-abd1-b79aab2799d8" name="getRacerResults" />
+            </when>
+            <otherwise>
+                <flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard" />
+            </otherwise>
+        </choice>
     </flow>
 </mule>

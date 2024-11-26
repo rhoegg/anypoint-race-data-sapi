@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
-	xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
 	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
 		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
@@ -34,7 +35,9 @@ output application/json
 	email: payload.email,
 	racerId: vars.racerId,
 	clientId: payload.clientId,
-	(created: toRedisDate(vars.created)) if vars.created?
+	baseUri: payload.baseUri,
+	(created: toRedisDate(vars.created)) if vars.created?,
+	(updated: toRedisDate(now())) if ! vars.created?,
 } pluck (value, field) -> {field: field, value: value}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
@@ -44,7 +47,7 @@ output application/json
 				<redis:value ><![CDATA[#[payload.value]]]></redis:value>
 			</redis:set-in-hash>
 		</parallel-foreach>
-		<redis:add-to-set doc:name="season3:racers" doc:id="215ec890-f975-47f4-bc7c-8a3509f79d24" config-ref="redisConfig" key="season3:racers" target="racersResult">
+		<redis:add-to-set doc:name="season4:racers" doc:id="215ec890-f975-47f4-bc7c-8a3509f79d24" config-ref="redisConfig" key="season4:racers" target="racersResult">
 			<redis:value ><![CDATA[#[vars.racerId]]]></redis:value>
 		</redis:add-to-set>
 		<ee:transform doc:name="response" doc:id="188ef256-877a-47bf-89a6-5af3078b23b4" >
@@ -80,6 +83,52 @@ payload]]></ee:set-payload>
 			</on-error-continue>
 		</error-handler>
 	</flow>
+	<sub-flow name="getRacers" doc:id="b45e2ad6-5a7c-411e-bc5a-a36dc777a86d" >
+		<ee:transform doc:name="keys" doc:id="bc4c3d11-cbc4-4d8e-b675-07366b34d662" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map (o) -> "racerprofile:$(o.racerId)"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="TRACE" doc:name="TODO" doc:id="97ddb9f0-766f-4993-afd8-f4b044c081af" message="Need to enhance Lettuce connector with MULTI" category="todo"/>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="b7168414-aa62-409b-ba1d-396e13457e9c" >
+			<lettuce:hmget doc:name="racerprofile" doc:id="5add12e6-22b5-418d-8158-1160a95da0b0" config-ref="Lettuce_Redis_Config" key="#[payload]">
+				<lettuce:field-names>
+					<lettuce:field-name value="racerId" />
+					<lettuce:field-name value="clientId" />
+					<lettuce:field-name value="name" />
+					<lettuce:field-name value="email" />
+					<lettuce:field-name value="baseUri" />
+					<lettuce:field-name value="created" />
+					<lettuce:field-name value="updated" />
+				</lettuce:field-names>
+			</lettuce:hmget>
+
+		</parallel-foreach>
+		<ee:transform doc:name="response" doc:id="f9e2dec6-dd1d-4276-86d3-b503188c7268" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+payload map (m) -> do {
+	var result = m.payload
+	---
+	{
+		displayName: result.name,
+		email: result.email,
+		racerId: result.racerId,
+		clientId: result.clientId,
+		baseUri: result.baseUri,
+		lastUpdated: if (result.updated != null) fromRedisDate(result.updated)
+					 else fromRedisDate(result.created)
+	}	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
 	<sub-flow name="searchRacersByClientId" doc:id="dded6f18-2455-4389-99fe-e3f264081eb4" >
 		<redis:get doc:name="racerid" doc:id="da5e7b85-8e8d-4e02-ad94-c25649305379" config-ref="redisConfig" key='#["racerid:$(vars.clientId)"]'/>
 		<ee:transform doc:name="response" doc:id="0c9e5b89-38d8-410e-bf0f-6dc43dd87cde" >
@@ -92,19 +141,32 @@ else [{racerId: payload}]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
+	<sub-flow name="searchAllRacers" doc:id="1987a620-0563-4c88-93e7-198a8cb48080" >
+		<lettuce:search-keys doc:name="racerprofile:*" doc:id="009ee754-ed98-41c4-92a7-16369fec8812" config-ref="Lettuce_Redis_Config" match="racerprofile:*" pageSizeHint="500"/>
+		<ee:transform doc:name="extract racerIds" doc:id="b87c0073-b19c-42ef-9de4-52b2e090a204" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (k) -> {
+	racerId: (k splitBy ":")[-1]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
 	<sub-flow name="updateRacer" doc:id="15480212-7475-460b-a896-cf1a1c8569a3" >
 		<ee:transform doc:name="to hash field array" doc:id="cf4b4b53-6f5a-4c49-a43c-f1006e2134fa" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
 				<ee:set-variable variableName="hashFieldArray" ><![CDATA[%dw 2.0
+import mergeWith from dw::core::Objects
 import * from dw::app::Transforms
 output application/json
 ---
-{
-	name: payload.displayName,
-	email: payload.email,
-	racerId: vars.racerId
+payload - "created" ++ {
+	racerId: vars.racerId,
+	updated: toRedisDate(now())
 } pluck (value, field) -> {field: field, value: value}]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>

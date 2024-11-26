@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_1987a620_0563_4c88_93e7_198a8cb48080_Output_Payload = Array<{  racerId*: String,   _?: Any} | {  baseUri?: String,   clientId: String,   displayName: String,   email: String,   lastUpdated?: String,   racerId*: String,   _?: Any}>
+
