@@ -1,4 +1,4 @@
 %dw 2.0
 
-type auto_b45e2ad6_5a7c_411e_bc5a_a36dc777a86d_Output_Payload = Array<{  racerId: String,   _?: Any} | {  lastUpdated?: String,   racerId?: String,   clientId: String,   displayName: String,   baseUri?: String,   email: String,   _?: Any}>
+type auto_b45e2ad6_5a7c_411e_bc5a_a36dc777a86d_Output_Payload = Array<{  racerId: String,   _?: Any} | {  lastUpdated?: String,   racerId?: String,   clientId: String,   baseUri?: String,   name: String,   email: String,   _?: Any}>
 

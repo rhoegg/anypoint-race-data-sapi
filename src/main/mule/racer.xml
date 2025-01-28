@@ -31,7 +31,7 @@ import * from dw::app::Transforms
 output application/json
 ---
 {
-	name: payload.displayName,
+	name: payload.name,
 	email: payload.email,
 	racerId: vars.racerId,
 	clientId: payload.clientId,
@@ -70,9 +70,14 @@ payload mergeWith {
 		<ee:transform doc:name="Transform Message" doc:id="d1d9b36c-1415-431a-af15-4c6db768b102" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+
 output application/json
 ---
-payload]]></ee:set-payload>
+payload update {
+	case d at .created -> fromRedisDate(d)
+	case d at .updated -> fromRedisDate(d)
+}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<error-handler >
@@ -117,7 +122,7 @@ payload map (m) -> do {
 	var result = m.payload
 	---
 	{
-		displayName: result.name,
+		name: result.name,
 		email: result.email,
 		racerId: result.racerId,
 		clientId: result.clientId,
@@ -164,7 +169,7 @@ import mergeWith from dw::core::Objects
 import * from dw::app::Transforms
 output application/json
 ---
-payload - "created" ++ {
+payload - "created" mergeWith {
 	racerId: vars.racerId,
 	updated: toRedisDate(now())
 } pluck (value, field) -> {field: field, value: value}]]></ee:set-variable>
