@@ -183,36 +183,5 @@ payload - "created" mergeWith {
 			</redis:set-in-hash>
 		</parallel-foreach>
 	</sub-flow>
-	<sub-flow name="updateEntry" doc:id="a03adda1-71e8-4335-9b2a-a4de418cedd4">
-    <set-variable value="#[payload.racerId]" doc:name="Set Variable" doc:id="679aedad-861b-4539-910f-bffd728f3835" variableName="racerId"/>
-		<ee:transform doc:name="to hash field array" doc:id="689a1c75-ddd5-4d7f-bcac-051f86074dc5">
-        <ee:variables>
-            <ee:set-variable variableName="hashFieldArray"><![CDATA[%dw 2.0               
-import * from dw::app::Transforms
-output application/json
----
-{
-	name: payload.name,
-	score: payload.score,
-	racerId: vars.racerId,
-	baseUri: payload.baseUri,
-	(created: toRedisDate(vars.created)) if vars.created?,
-	(updated: toRedisDate(now())) if ! vars.created?,
-} pluck (value, field) -> {field: field, value: value}]]>
-            </ee:set-variable>
-        </ee:variables>
-    </ee:transform>
-
-    <logger level="INFO" doc:name="Logger" doc:id="77670371-b54d-4b55-815d-44467a2ec7eb" message="Hash Fields: #[vars.hashFieldArray]"/>
-
-    <parallel-foreach doc:name="Parallel For Each" doc:id="0ba6ec2b-892d-464f-b75e-723bd47ea128" collection="#[vars.hashFieldArray]" target="hsetResult">
-        <redis:set-in-hash doc:name="racerEntry" doc:id="e83de0df-fbc9-480d-97b1-26c6f81d279b" 
-            key='#["challenge:aiagent:$(vars.racerId)"]' 
-            field="#[payload.field]" 
-            config-ref="redisConfig">
-            <redis:value><![CDATA[#[payload.value]]]></redis:value>
-        </redis:set-in-hash>
-    </parallel-foreach>
-</sub-flow>
 
 </mule>

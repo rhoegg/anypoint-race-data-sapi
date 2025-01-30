@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="updateEntry" doc:id="b78f8610-4182-4514-8451-f6d010fadca4" >
+		<set-variable value="#[1]" doc:name="set active to 1" doc:id="91ec2c6c-d05c-4ea0-b883-2e849ad2f327" variableName="active"/>
+		<ee:transform doc:name="Transform Message" doc:id="3ae4eae0-716c-42c2-b14d-e1e073353752">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::app::Transforms
+output application/json
+---
+{
+	name: payload.name,
+	score: payload.score,
+	racerId: payload.racerId,
+	baseUri: payload.baseUri,
+	active: vars.active,
+	updated: toRedisDate(now())
+} ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="DEBUG" doc:id="e1b0b7c1-7c07-49a8-a768-9036b8417b84" message="#[payload]"/>
+		<lettuce:hset doc:name="Store entry info" doc:id="d8c88fb1-b1e8-40ea-962c-3049271c3a31" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(payload.racerId)"]'>
+			<lettuce:fields ><![CDATA[#[output application/java
+---
+{
+	"active" : vars.active,
+	"updated" : payload.updated,
+	"baseUri" : payload.baseUri,
+	"racerId" : payload.racerId,
+	"name" : payload.name,
+	"score" : payload.score
+}]]]></lettuce:fields>
+		</lettuce:hset>
+		<logger level="INFO" doc:name="Logger" doc:id="b6ef83fd-728b-4d81-b2bf-a457e9fe29aa" />
+	</sub-flow>
+	<sub-flow name="entrySub_Flow" doc:id="31b55c23-41c3-4b24-8df3-b4c92e117c33" >
+		<ee:transform doc:name="Transform Message" doc:id="6f6c13c5-10d0-401e-bb8b-c116cc44decc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
