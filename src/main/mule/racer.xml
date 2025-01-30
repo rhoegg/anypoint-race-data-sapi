@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
 		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
@@ -182,4 +183,36 @@ payload - "created" mergeWith {
 			</redis:set-in-hash>
 		</parallel-foreach>
 	</sub-flow>
+	<sub-flow name="updateEntry" doc:id="a03adda1-71e8-4335-9b2a-a4de418cedd4">
+    <set-variable value="#[payload.racerId]" doc:name="Set Variable" doc:id="679aedad-861b-4539-910f-bffd728f3835" variableName="racerId"/>
+		<ee:transform doc:name="to hash field array" doc:id="689a1c75-ddd5-4d7f-bcac-051f86074dc5">
+        <ee:variables>
+            <ee:set-variable variableName="hashFieldArray"><![CDATA[%dw 2.0               
+import * from dw::app::Transforms
+output application/json
+---
+{
+	name: payload.name,
+	score: payload.score,
+	racerId: vars.racerId,
+	baseUri: payload.baseUri,
+	(created: toRedisDate(vars.created)) if vars.created?,
+	(updated: toRedisDate(now())) if ! vars.created?,
+} pluck (value, field) -> {field: field, value: value}]]>
+            </ee:set-variable>
+        </ee:variables>
+    </ee:transform>
+
+    <logger level="INFO" doc:name="Logger" doc:id="77670371-b54d-4b55-815d-44467a2ec7eb" message="Hash Fields: #[vars.hashFieldArray]"/>
+
+    <parallel-foreach doc:name="Parallel For Each" doc:id="0ba6ec2b-892d-464f-b75e-723bd47ea128" collection="#[vars.hashFieldArray]" target="hsetResult">
+        <redis:set-in-hash doc:name="racerEntry" doc:id="e83de0df-fbc9-480d-97b1-26c6f81d279b" 
+            key='#["challenge:aiagent:$(vars.racerId)"]' 
+            field="#[payload.field]" 
+            config-ref="redisConfig">
+            <redis:value><![CDATA[#[payload.value]]]></redis:value>
+        </redis:set-in-hash>
+    </parallel-foreach>
+</sub-flow>
+
 </mule>
