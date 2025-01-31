@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
-http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
 		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
@@ -182,4 +183,5 @@ payload - "created" mergeWith {
 			</redis:set-in-hash>
 		</parallel-foreach>
 	</sub-flow>
+
 </mule>
