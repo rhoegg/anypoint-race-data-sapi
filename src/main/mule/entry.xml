@@ -13,17 +13,23 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 import * from dw::app::Transforms
 output application/json
 ---
-{
-	name: payload.name,
-	score: payload.score,
-	racerId: payload.racerId,
-	baseUri: payload.baseUri,
+{ 
 	active: vars.active,
-	created: toRedisDate(now()),
-	updated: toRedisDate(now())
+	racer: {
+		id: payload.racerid,
+		name: payload.name,
+		baseUri: payload,
+		},
+	status: {
+		nameCheck: {
+			score: payload.score
+		}
+	}
+
 } ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="9b258117-6fe7-4827-9800-7b9075dbb26c" variableName="entryInformation"/>
 		<logger level="INFO" doc:name="DEBUG" doc:id="e1b0b7c1-7c07-49a8-a768-9036b8417b84" message='#["racerentryScore:$(payload.score)"]'/>
 		<lettuce:hset doc:name="Store entry info" doc:id="d8c88fb1-b1e8-40ea-962c-3049271c3a31" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(payload.racerId)"]'>
 			<lettuce:fields ><![CDATA[#[output application/java
@@ -38,16 +44,7 @@ output application/json
 	"nameScore" : payload.score
 }]]]></lettuce:fields>
 		</lettuce:hset>
+		<set-payload value="#[vars.entryInformation]" doc:name="Set Payload" doc:id="408e5de4-b33e-4e4e-a245-d304cb79b861" />
 		<logger level="INFO" doc:name="Logger" doc:id="b6ef83fd-728b-4d81-b2bf-a457e9fe29aa" message="#[output application/json --- payload]"/>
-	</sub-flow>
-	<sub-flow name="entrySub_Flow" doc:id="31b55c23-41c3-4b24-8df3-b4c92e117c33" >
-		<ee:transform doc:name="Transform Message" doc:id="6f6c13c5-10d0-401e-bb8b-c116cc44decc">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload ]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
 	</sub-flow>
 </mule>

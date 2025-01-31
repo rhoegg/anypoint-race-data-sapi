@@ -2000,4 +2000,13 @@ type: string]]></types:shape>
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#91ec2c6c-d05c-4ea0-b883-2e849ad2f327">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="RacerId"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
 </types:mule>
