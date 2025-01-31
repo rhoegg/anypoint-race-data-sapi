@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
-    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:2.0.5:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:2.0.7:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -177,6 +177,7 @@ output application/json
         </choice>
     </flow>
     <flow name="put:\racers\(id)\entry:application\json:race-data-system-api-config">
+        <set-variable value="#[attributes.uriParams.id]" doc:name="Set Variable" doc:id="8d3b8301-21f6-48ff-b43a-06cf27fb1a57" variableName="racerId" />
         <flow-ref doc:name="updateEntry" doc:id="435a4a09-8290-49aa-a73d-05641cc2fa74" name="updateEntry" />
         <logger level="INFO" message="put:\racers\(id)\entry:application\json:race-data-system-api-config" />
     </flow>
