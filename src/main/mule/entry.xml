@@ -24,7 +24,7 @@ output application/json
 } ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="DEBUG" doc:id="e1b0b7c1-7c07-49a8-a768-9036b8417b84" message="#[payload]"/>
+		<logger level="INFO" doc:name="DEBUG" doc:id="e1b0b7c1-7c07-49a8-a768-9036b8417b84" message='#["racerentryScore:$(payload.score)"]'/>
 		<lettuce:hset doc:name="Store entry info" doc:id="d8c88fb1-b1e8-40ea-962c-3049271c3a31" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(payload.racerId)"]'>
 			<lettuce:fields ><![CDATA[#[output application/java
 ---
