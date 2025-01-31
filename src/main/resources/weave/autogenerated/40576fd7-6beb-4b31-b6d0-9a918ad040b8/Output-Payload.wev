@@ -1,0 +1,22 @@
+%dw 2.0
+
+type auto_40576fd7_6beb_4b31_b6d0_9a918ad040b8_Output_Payload = {
+  racer: {
+    baseUri: String, 
+    name: String, 
+    id?: String, 
+    _?: Any
+  }, 
+  active: Boolean, 
+  started?: String, 
+  updated?: String, 
+  status: {
+    nameCheck?: {
+      score?: Number, 
+      _?: Any
+    }, 
+    _?: Any
+  }, 
+  _?: Any
+}
+
