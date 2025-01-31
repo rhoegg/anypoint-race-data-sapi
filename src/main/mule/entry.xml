@@ -19,6 +19,7 @@ output application/json
 	racerId: payload.racerId,
 	baseUri: payload.baseUri,
 	active: vars.active,
+	created: toRedisDate(now()),
 	updated: toRedisDate(now())
 } ]]></ee:set-payload>
 			</ee:message>
@@ -31,12 +32,13 @@ output application/json
 	"active" : vars.active,
 	"updated" : payload.updated,
 	"baseUri" : payload.baseUri,
+	"created" : payload.updated,
 	"racerId" : payload.racerId,
 	"name" : payload.name,
-	"score" : payload.score
+	"nameScore" : payload.score
 }]]]></lettuce:fields>
 		</lettuce:hset>
-		<logger level="INFO" doc:name="Logger" doc:id="b6ef83fd-728b-4d81-b2bf-a457e9fe29aa" />
+		<logger level="INFO" doc:name="Logger" doc:id="b6ef83fd-728b-4d81-b2bf-a457e9fe29aa" message="#[output application/json --- payload]"/>
 	</sub-flow>
 	<sub-flow name="entrySub_Flow" doc:id="31b55c23-41c3-4b24-8df3-b4c92e117c33" >
 		<ee:transform doc:name="Transform Message" doc:id="6f6c13c5-10d0-401e-bb8b-c116cc44decc">
