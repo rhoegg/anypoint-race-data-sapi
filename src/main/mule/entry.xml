@@ -51,7 +51,7 @@ output application/json
 	(updated:  fromRedisDate(payload.updated)) if payload.updated?,
 	status: {
 		nameCheck: {
-			score: payload.'status:nameCheck:score',
+			score: payload.'status:nameCheck:score' as Number,
 		},
 	}
 }]]></ee:set-payload>
