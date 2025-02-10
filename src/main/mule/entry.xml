@@ -46,7 +46,7 @@ output application/json
 		name: payload.'racer:name',
 		id: payload.'racer:id',
 	},
-	active:  (payload.active == 1),
+	active:  (payload.active != "0"),
 	started:  fromRedisDate(payload.started),
 	(updated:  fromRedisDate(payload.updated)) if payload.updated?,
 	status: {
