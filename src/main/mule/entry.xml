@@ -6,6 +6,7 @@
 http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<sub-flow name="updateEntry" doc:id="b78f8610-4182-4514-8451-f6d010fadca4" >
+		<set-variable value="#[0]" doc:name="Set Variable" doc:id="0818aa0f-ce18-4fe1-be9c-ba2b162f407d" variableName="score"/>
 		<ee:transform doc:name="Transform Message" doc:id="3ae4eae0-716c-42c2-b14d-e1e073353752">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -15,6 +16,7 @@ output application/json
 ---
 { 
 	active: if (payload.active) 1 else 0,
+	score: vars.score,
 	"racer:baseUri": payload.racer.baseUri,
 	"racer:name": payload.racer.name,
 	"racer:id": vars.racerId,
@@ -34,9 +36,11 @@ output application/json
 	</sub-flow>
 	<sub-flow name="getEntry" doc:id="40576fd7-6beb-4b31-b6d0-9a918ad040b8" >
 		<lettuce:hgetall doc:name="Get entry info" doc:id="65dd9600-e4e6-4b93-a45b-f3ba22f84583" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]'/>
-		<ee:transform doc:name="Transform Message" doc:id="736fc9d0-24e1-49a0-8889-793d7252b1be" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<choice doc:name="Choice" doc:id="f6cd7163-e76e-43d8-8442-9d603edd618a" >
+			<when expression="#[payload.score is Null]">
+				<ee:transform doc:name="Transform Message" doc:id="736fc9d0-24e1-49a0-8889-793d7252b1be">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 import fromRedisDate from dw::app::Transforms
 output application/json
 ---
@@ -57,5 +61,37 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="eb5d60de-981f-4245-aecb-cb4d8c59b4c5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+import fromRedisDate from dw::app::Transforms
+output application/json
+---
+{
+	racer: {
+		baseUri: payload.'racer:baseUri',
+		name: payload.'racer:name',
+		id: payload.'racer:id',
+	},
+	score: payload.score as Number,
+	active:  (payload.active != "0"),
+	started:  fromRedisDate(payload.started),
+	(updated:  fromRedisDate(payload.updated)) if payload.updated?,
+	status: {
+		nameCheck: {
+			score: payload.'status:nameCheck:score' as Number,
+		},
+	}
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="scoreIncreasebyOne" doc:id="c2ba12ab-d18f-4120-ba01-336947246899" >
+		<lettuce:hincrby increment="1" doc:name="HINCRBY" doc:id="76e54e6e-7979-40b7-a91b-304babf4593c" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d648d343-6ea3-42bf-97ed-9ce0bb44bbd7" message="Increased score #[payload]"/>
 	</sub-flow>
 </mule>

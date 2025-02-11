@@ -1,0 +1,7 @@
+%dw 2.0
+
+type auto_c2ba12ab_d18f_4120_ba01_336947246899_Input_Payload = {
+  score?: Number, 
+  _?: Any
+}
+
