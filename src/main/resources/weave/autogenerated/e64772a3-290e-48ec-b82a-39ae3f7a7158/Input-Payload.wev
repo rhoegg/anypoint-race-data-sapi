@@ -1,7 +1,0 @@
-%dw 2.0
-
-type auto_e64772a3_290e_48ec_b82a_39ae3f7a7158_Input_Payload = {
-  score?: Number, 
-  _?: Any
-}
-
