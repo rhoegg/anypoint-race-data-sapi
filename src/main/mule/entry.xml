@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd">
 	<sub-flow name="updateEntry" doc:id="b78f8610-4182-4514-8451-f6d010fadca4" >
 		<ee:transform doc:name="Transform Message" doc:id="3ae4eae0-716c-42c2-b14d-e1e073353752">
 			<ee:message>
@@ -57,5 +58,44 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</sub-flow>
+	<flow name="incrby1" doc:id="3d0f428c-2982-450c-b6b4-7b9aa417fd27" >
+		<try doc:name="Try" doc:id="5d64dfbd-2da2-466a-b3c9-8083e4504b68" >
+			<lettuce:get doc:name="scores:season4" doc:id="901fdd34-a8fc-48dd-9dbf-cbc71c5f09be" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5f2d7753-5f3b-456f-8fa9-a94fc4a0aa2e" type="LETTUCE:NIL">
+					<set-variable value="#[uuid()]" doc:name="aiagent" doc:id="927d340c-8b11-4c27-a760-5dc05b6bfb08" variableName="aiagent" />
+					<ee:transform doc:name="Transform Message" doc:id="d6ef0791-a780-44e8-b5a1-f0836ee78827">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+"score:aiagent:$(vars.aiagent)"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+					<lettuce:set doc:name="SET" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="setResult">
+				</lettuce:set>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<lettuce:hincrby increment="1" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key='#[payload]' field="name" target="setResult"/>
+		<lettuce:hincrby increment="1" doc:name="Increase entry-total score by 1" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
+		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
+	</flow>
+	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
+		<lettuce:hgetall doc:name="Get racer score" doc:id="4b5575d0-e1e0-44d8-aca3-eba57b9c6d9c" config-ref="Lettuce_Redis_Config" key='#[payload]' />
+		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	score: {
+		name: payload.name as Number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="92967652-9075-4d46-bf65-48dee0bfcaed" message="Score of racer is #[payload]"/>
 	</sub-flow>
 </mule>

@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_c28d1aa9_bb84_4fcc_b9a7_bda954391198_Input_Variables_aiagent = String | Null
+
