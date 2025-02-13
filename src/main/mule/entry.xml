@@ -60,32 +60,30 @@ output application/json
 		</ee:transform>
 	</sub-flow>
 	<flow name="incrby1" doc:id="3d0f428c-2982-450c-b6b4-7b9aa417fd27" >
-		<lettuce:hgetall doc:name="Get racer information" doc:id="61eb38b0-2b9f-444b-b4da-710959fffa8b" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]'/>
-		<choice doc:name="Choice" doc:id="d3c79b92-92cb-433f-98ad-3269b6acdce0">
-			<when expression='#[isEmpty(payload.score)]'>
-				<set-variable value="#[uuid()]" doc:name="aiagent" doc:id="927d340c-8b11-4c27-a760-5dc05b6bfb08" variableName="aiagent" />
-				<lettuce:hset doc:name="HSET" doc:id="8e6ee0b5-50c9-4bdb-a47e-84ea1b927b01" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]'>
-					<lettuce:fields ><![CDATA[#[output application/java
+		<try doc:name="Try" doc:id="5d64dfbd-2da2-466a-b3c9-8083e4504b68" >
+			<lettuce:get doc:name="scores:season4" doc:id="901fdd34-a8fc-48dd-9dbf-cbc71c5f09be" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5f2d7753-5f3b-456f-8fa9-a94fc4a0aa2e" type="LETTUCE:NIL">
+					<set-variable value="#[uuid()]" doc:name="aiagent" doc:id="927d340c-8b11-4c27-a760-5dc05b6bfb08" variableName="aiagent" />
+					<ee:transform doc:name="Transform Message" doc:id="d6ef0791-a780-44e8-b5a1-f0836ee78827">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
 ---
-{
-	"score" : vars.aiagent
-}]]]></lettuce:fields>
-				</lettuce:hset>
-				<set-variable value="#[now()]" doc:name="Set Variable" doc:id="f745f298-eec1-4b1b-b4dc-d1dc7c101f39" variableName="started"/>
-			</when>
-			<otherwise>
-				<logger level="INFO" doc:name="Logger" doc:id="a80203f0-171d-432a-87ea-81fdbd868f00" />
-				<set-variable value="#[payload.score]" doc:name="aiagent" doc:id="990b55c2-f67d-45af-bc8d-1de92088a5c0" variableName="aiagent" />
-			</otherwise>
-		</choice>
-		<lettuce:hincrby increment="1" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key='#["score:aiagent:$(vars.aiagent)"]' field="name"/>
-		<redis:add-to-set doc:name="add to score:season4" doc:id="f68da5bd-40dc-478c-b16b-aafae6685825" key="score:season4" config-ref="redisConfig">
-			<redis:value ><![CDATA[#[vars.racerId]]]></redis:value>
-		</redis:add-to-set>
+"score:aiagent:$(vars.aiagent)"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+					<lettuce:set doc:name="SET" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="setResult">
+				</lettuce:set>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<lettuce:hincrby increment="1" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key='#[payload]' field="name" target="setResult"/>
+		<lettuce:hincrby increment="1" doc:name="Increase entry-total score by 1" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
-		<lettuce:hgetall doc:name="Get racer score" doc:id="4b5575d0-e1e0-44d8-aca3-eba57b9c6d9c" config-ref="Lettuce_Redis_Config" key='#["score:aiagent:$(vars.aiagent)"]' />
+		<lettuce:hgetall doc:name="Get racer score" doc:id="4b5575d0-e1e0-44d8-aca3-eba57b9c6d9c" config-ref="Lettuce_Redis_Config" key='#[payload]' />
 		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
