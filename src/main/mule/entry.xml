@@ -33,6 +33,25 @@ output application/json
 		<set-payload value="#[vars.entryInformation]" doc:name="Set Payload" doc:id="408e5de4-b33e-4e4e-a245-d304cb79b861" />
 		<logger level="INFO" doc:name="Logger" doc:id="b6ef83fd-728b-4d81-b2bf-a457e9fe29aa" message="#[output application/json --- payload]"/>
 	</sub-flow>
+	<sub-flow name="setActive" doc:id="15b170af-aac1-4992-9fb1-260b010a9e21" >
+		<ee:transform doc:name="Change true/false" doc:id="9ada39b0-fb3d-47b1-a5b1-240b22b110a6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+		active: if (payload) 1 else 0,
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<lettuce:hset doc:name="Store active info" doc:id="89d1a851-6861-4286-a986-8a47acacbb8f" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]'>
+			<lettuce:fields ><![CDATA[#[output application/java
+---
+{
+	active : payload.active
+}]]]></lettuce:fields>
+		</lettuce:hset>
+	</sub-flow>
 	<sub-flow name="getEntry" doc:id="40576fd7-6beb-4b31-b6d0-9a918ad040b8" >
 		<lettuce:hgetall doc:name="Get entry info" doc:id="65dd9600-e4e6-4b93-a45b-f3ba22f84583" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]'/>
 		<ee:transform doc:name="Transform Message" doc:id="736fc9d0-24e1-49a0-8889-793d7252b1be" >
