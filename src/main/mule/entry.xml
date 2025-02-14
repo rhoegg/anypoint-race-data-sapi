@@ -79,6 +79,7 @@ output application/json
 		</ee:transform>
 	</sub-flow>
 	<flow name="incrby1" doc:id="3d0f428c-2982-450c-b6b4-7b9aa417fd27" >
+		<set-variable value="#[payload.name]" doc:name="Set Variable" doc:id="123ab7f4-c06e-4945-94f5-8631b1337c33" variableName="nameScore"/>
 		<try doc:name="Try" doc:id="5d64dfbd-2da2-466a-b3c9-8083e4504b68" >
 			<lettuce:get doc:name="scores:season4" doc:id="901fdd34-a8fc-48dd-9dbf-cbc71c5f09be" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' />
 			<error-handler >
@@ -97,21 +98,19 @@ output text/plain
 				</on-error-continue>
 			</error-handler>
 		</try>
-		<lettuce:hincrby increment="1" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key='#[payload]' field="name" target="setResult"/>
-		<lettuce:hincrby increment="1" doc:name="Increase entry-total score by 1" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
+		<lettuce:hincrby increment="#[vars.nameScore]" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key='#[payload]' field="name" target="setResult"/>
+		<lettuce:hincrby increment="#[vars.nameScore]" doc:name="Increase entry-total score by 1" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
-		<lettuce:hgetall doc:name="Get racer score" doc:id="4b5575d0-e1e0-44d8-aca3-eba57b9c6d9c" config-ref="Lettuce_Redis_Config" key='#[payload]' />
+		<lettuce:hget doc:name="HGET" doc:id="5c99e35b-08d2-4f51-8df0-eeea71eb2b2b" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score"/>
 		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	score: {
-		name: payload.name as Number
-	}
+	score: payload as Number
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
