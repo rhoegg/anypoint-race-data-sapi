@@ -103,14 +103,14 @@ output text/plain
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
-		<lettuce:hgetall doc:name="Get racer score" doc:id="4b5575d0-e1e0-44d8-aca3-eba57b9c6d9c" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' />
+		<lettuce:hget doc:name="HGET" doc:id="5c99e35b-08d2-4f51-8df0-eeea71eb2b2b" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score"/>
 		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	score: payload.score as Number
+	score: payload as Number
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
