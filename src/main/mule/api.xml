@@ -187,9 +187,16 @@ output application/json
         <logger level="INFO" message="get:\racers\(id)\entry:race-data-system-api-config" />
     </flow>
     <flow name="post:\racers\(id)\entry\score:application\json:race-data-system-api-config">
-		<set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a86658aa-8192-4f56-ab29-99765f2400b2" variableName="racerId" />
-		<flow-ref doc:name="incrby1" doc:id="e4b76a05-fa5d-4b4f-b2c4-41f888bf8827" name="incrby1" />
-		<flow-ref doc:name="checkScore" doc:id="9889f68a-8222-44bd-8b83-ed88b97b9c70" name="getScore" />
-		<logger level="INFO" message="post:\racers\(id)\entry:race-data-system-api-config" />
+        <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a86658aa-8192-4f56-ab29-99765f2400b2" variableName="racerId" />
+        <flow-ref doc:name="incrby1" doc:id="e4b76a05-fa5d-4b4f-b2c4-41f888bf8827" name="incrby1" />
+        <flow-ref doc:name="checkScore" doc:id="9889f68a-8222-44bd-8b83-ed88b97b9c70" name="getScore" />
+        <logger level="INFO" message="post:\racers\(id)\entry:race-data-system-api-config" />
+    </flow>
+    <flow name="put:\racers\(id)\entry\active:application\json:race-data-system-api-config">
+        <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="860219fd-efbb-4c91-8eca-02a8808c084c" variableName="racerId" />
+        <flow-ref doc:name="inactivateRacer" doc:id="25918b6a-68e3-4d0b-8938-e10eb88dbaca" name="setActive" />
+    </flow>
+    <flow name="get:\entries:race-data-system-api-config">
+		<flow-ref doc:name="getActiveKey" doc:id="31e62e59-affe-4587-a2b3-26ae2b760c4d" name="getActiveKey"/>
     </flow>
 </mule>
