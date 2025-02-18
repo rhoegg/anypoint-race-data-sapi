@@ -78,8 +78,8 @@ output application/json
 			</ee:message>
 		</ee:transform>
 	</sub-flow>
-	<flow name="incrby1" doc:id="3d0f428c-2982-450c-b6b4-7b9aa417fd27" >
-		<ee:transform doc:name="Transform Message" doc:id="08bf11d9-d95b-460c-873d-7bda75f38768" >
+	<flow name="incrby" doc:id="3d0f428c-2982-450c-b6b4-7b9aa417fd27" >
+		<ee:transform doc:name="challenge and score data" doc:id="08bf11d9-d95b-460c-873d-7bda75f38768" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
@@ -111,8 +111,8 @@ output text/plain
 				</on-error-continue>
 			</error-handler>
 		</try>
-		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase name score by 1" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[payload]" field="#[vars.score.challenge[0]]" target="setResult" />
-		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase entry-total score by 1" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
+		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[payload]" field="#[vars.score.challenge[0]]" target="setResult" />
+		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase entry-total score" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >

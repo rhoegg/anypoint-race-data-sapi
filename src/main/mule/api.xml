@@ -188,7 +188,7 @@ output application/json
     </flow>
     <flow name="post:\racers\(id)\entry\score:application\json:race-data-system-api-config">
         <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a86658aa-8192-4f56-ab29-99765f2400b2" variableName="racerId" />
-		<flow-ref doc:name="incrby1" doc:id="e4b76a05-fa5d-4b4f-b2c4-41f888bf8827" name="incrby1" />
+		<flow-ref doc:name="incrby" doc:id="e4b76a05-fa5d-4b4f-b2c4-41f888bf8827" name="incrby" />
 		<flow-ref doc:name="getScore" doc:id="9889f68a-8222-44bd-8b83-ed88b97b9c70" name="getScore" />
 		<logger level="INFO" message="post:\racers\(id)\entry:race-data-system-api-config" />
     </flow>
