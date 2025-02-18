@@ -73,7 +73,8 @@ output application/json
 		nameCheck: {
 			score: payload.'status:nameCheck:score' as Number,
 		},
-	}
+	},
+	score: payload.score
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
