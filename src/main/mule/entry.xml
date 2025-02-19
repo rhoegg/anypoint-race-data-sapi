@@ -88,14 +88,14 @@ output application/json
 output application/json
 
 ---
-{
-	challenge: payload pluck (value, key) -> key,
-	score: payload pluck (value, key) -> value
-}]]></ee:set-variable>
+payload pluck ((value, key) -> { 
+	challenge: key, 
+	score: value
+})]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<try doc:name="Try" doc:id="5d64dfbd-2da2-466a-b3c9-8083e4504b68" >
-			<lettuce:get doc:name="scores:season4" doc:id="901fdd34-a8fc-48dd-9dbf-cbc71c5f09be" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' />
+			<lettuce:get doc:name="scores:season4" doc:id="901fdd34-a8fc-48dd-9dbf-cbc71c5f09be" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key"/>
 			<error-handler >
 				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5f2d7753-5f3b-456f-8fa9-a94fc4a0aa2e" type="LETTUCE:NIL">
 					<set-variable value="#[uuid()]" doc:name="aiagent" doc:id="927d340c-8b11-4c27-a760-5dc05b6bfb08" variableName="aiagent" />
@@ -107,17 +107,21 @@ output text/plain
 "score:aiagent:$(vars.aiagent)"]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-					<lettuce:set doc:name="SET" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="setResult">
+					<lettuce:set doc:name="SET" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key">
 				</lettuce:set>
 				</on-error-continue>
 			</error-handler>
 		</try>
-		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[payload]" field="#[vars.score.challenge[0]]" target="setResult" />
-		<lettuce:hincrby increment="#[vars.score.score[0] as Number]" doc:name="Increase entry-total score" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult"/>
+		<foreach doc:name="For Each" doc:id="d82f1926-4e84-416f-9d92-7df452e3103f" collection="#[vars.score]">
+			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[vars.key]" field="#[payload.challenge]" target="setResult" />
+		</foreach>
+		<foreach doc:name="For Each" doc:id="72f3e4bd-a622-41b7-9e26-ec27f4b29b44" collection="#[vars.score]">
+			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase entry-total score" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult" />
+		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
-		<lettuce:hget doc:name="HGET" doc:id="5c99e35b-08d2-4f51-8df0-eeea71eb2b2b" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score"/>
+		<lettuce:hget doc:name="Get Score" doc:id="5c99e35b-08d2-4f51-8df0-eeea71eb2b2b" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score"/>
 		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -138,7 +142,7 @@ output application/json
         <lettuce:hmget doc:name="HMGET" doc:id="3e8cbff5-3ca0-49ae-bdc4-12a75f85a13a"
             config-ref="Lettuce_Redis_Config" key="#[payload]" fieldNames='#[["active"]]'/>
     </parallel-foreach>
-    <ee:transform doc:name="Transform Message" doc:id="d80efb20-99ad-4c41-a634-d1402f2b8ac2">
+    <ee:transform doc:name="filter by active status" doc:id="d80efb20-99ad-4c41-a634-d1402f2b8ac2">
         <ee:message>
             <ee:set-payload><![CDATA[%dw 2.0
 output application/JSON
@@ -159,6 +163,6 @@ activeKeys map (item) -> {
 ]]></ee:set-payload>
         </ee:message>
     </ee:transform>
-    <logger level="INFO" doc:name="Logger" doc:id="e0809f96-bf1f-46f5-891b-cf19676d4ec4"/>
+		<logger level="INFO" doc:name="Check racers" doc:id="e0809f96-bf1f-46f5-891b-cf19676d4ec4" message="Racers retrieved are #[payload]"/>
 </flow>
 </mule>
