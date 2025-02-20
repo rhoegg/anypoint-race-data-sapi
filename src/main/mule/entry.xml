@@ -68,7 +68,6 @@ output application/json
 	active:  (payload.active != "0"),
 	started:  fromRedisDate(payload.started),
 	(updated:  fromRedisDate(payload.updated)) if payload.updated?,
-	score: payload.score
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -121,8 +120,8 @@ output text/plain
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
-var nameScore = payload[0]as Number
-var questionScore = payload[1] as Number
+var nameScore = payload[1]as Number
+var questionScore = payload[0] as Number
 
 ---
 {
