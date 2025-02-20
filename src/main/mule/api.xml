@@ -182,7 +182,7 @@ output application/json
         <logger level="INFO" message="put:\racers\(id)\entry:application\json:race-data-system-api-config" />
     </flow>
     <flow name="get:\racers\(id)\entry:race-data-system-api-config">
-		<set-variable doc:name="racerId" doc:id="814d8546-47e4-43c7-ab0d-814c31653de0" variableName="racerId" value="43225d92-faa4-48f7-9f2f-8759d5818cbd"/>
+		<set-variable doc:name="racerId" doc:id="814d8546-47e4-43c7-ab0d-814c31653de0" variableName="racerId" value="#[attributes.uriParams.id]"/>
         <flow-ref doc:name="getEntry" doc:id="b89d2882-8c61-46c5-91ff-f85e4bced437" name="getEntry" target="racerEntry" />
         <flow-ref doc:name="getScore" doc:id="ac980a2a-e90f-4053-a930-e69b1a6e813e" name="getScore" />
         <ee:transform doc:name="racerEntry" doc:id="94b5ec19-ec02-4f5d-a560-f04c11ec2405">
