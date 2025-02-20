@@ -2,6 +2,10 @@
   "sampleData": {
     "689a1c75-ddd5-4d7f-bcac-051f86074dc5": {
       "vars-outboundHeaders": "sample_data/java.dwl"
+    },
+    "94b5ec19-ec02-4f5d-a560-f04c11ec2405": {
+      "payload": "sample_data/json_1.json",
+      "vars-racerEntry": "sample_data/json.json"
     }
   }
 }

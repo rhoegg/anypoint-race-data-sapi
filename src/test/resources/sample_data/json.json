@@ -1,0 +1,11 @@
+{
+  "racer": {
+    "baseUri": "https://api-test.anypointspeedway.com/racer/rhoegg",
+    "name": "Max the code whisperer",
+    "id": "d0f92d7b-15a7-4c83-9106-c26023db12a7"
+  },
+  "active": true,
+  "started": "2025-02-19T22:21:50.189Z",
+  "updated": "2025-02-19T22:21:54.751Z",
+  "score": "107"
+}
