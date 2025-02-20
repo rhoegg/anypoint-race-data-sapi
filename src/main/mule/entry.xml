@@ -137,7 +137,7 @@ var questionScore = payload[1] as Number
 		<logger level="INFO" doc:name="Logger" doc:id="92967652-9075-4d46-bf65-48dee0bfcaed" message="Score of racer is #[payload]"/>
 	</sub-flow>
 	<flow name="getActiveEntries" doc:id="dee2da7f-df92-461c-9d7d-6c6a77dacc6d">
-    <lettuce:search-keys doc:name="Search keys" doc:id="c5b2202d-a2dc-4547-aaf1-d59d81aa0a13"
+		<lettuce:search-keys doc:name="Search keys" doc:id="c5b2202d-a2dc-4547-aaf1-d59d81aa0a13"
         config-ref="Lettuce_Redis_Config" match="challenge:aiagent:*"/>
     <set-variable variableName="keys" value="#[payload]" doc:name="Store Keys"/>
     <parallel-foreach doc:name="Parallel For Each" doc:id="76d0348f-7ef4-4dc7-9b97-382a3e5ba45c">
@@ -147,22 +147,21 @@ var questionScore = payload[1] as Number
     <ee:transform doc:name="filter by active status" doc:id="d80efb20-99ad-4c41-a634-d1402f2b8ac2">
         <ee:message>
             <ee:set-payload><![CDATA[%dw 2.0
-output application/JSON
-var activeKeys = (payload map (item, index) -> {
+output application/json
+var activeKeys = payload map (item, index) -> {
     key: vars.keys[index],
     active: item.payload.active  
-}) 	filter ((item) ->
-		if (vars.active)
-		 item.active == "1"
-		else
-		 item.active == "0"		
-		 )
+} 
 ---
-activeKeys map (item) -> {
-    racerId: item.key replace "challenge:aiagent:" with ""
-}
-
-]]></ee:set-payload>
+activeKeys 
+    filter ((item) -> 
+        (vars.active == null) or 
+        (vars.active == "true" and item.active == "1") or 
+        (vars.active == "false" and item.active == "0")
+    ) 
+    map (item) -> {
+        racerId: item.key replace "challenge:aiagent:" with ""
+    }]]></ee:set-payload>
         </ee:message>
     </ee:transform>
 		<logger level="INFO" doc:name="Check racers" doc:id="e0809f96-bf1f-46f5-891b-cf19676d4ec4" message="Racers retrieved are #[payload]"/>
