@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
-    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:2.0.19:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="race-data-system-api-config" api="resource::ae6d7954-6fc2-4f3e-8777-80ff8aabd859:race-data-system-api:2.0.20:raml:zip:race-data-system-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <flow name="race-data-system-api-main">
         <http:listener config-ref="race-data-system-api-httpListenerConfig" path="/api/*">
             <http:response statusCode="#[vars.httpStatus default 200]">
@@ -182,22 +182,21 @@ output application/json
         <logger level="INFO" message="put:\racers\(id)\entry:application\json:race-data-system-api-config" />
     </flow>
     <flow name="get:\racers\(id)\entry:race-data-system-api-config">
-		<set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="814d8546-47e4-43c7-ab0d-814c31653de0" variableName="racerId" />
-		<flow-ref doc:name="getEntry" doc:id="b89d2882-8c61-46c5-91ff-f85e4bced437" name="getEntry" target="racerEntry"/>
-		<flow-ref doc:name="getScore" doc:id="ac980a2a-e90f-4053-a930-e69b1a6e813e" name="getScore"/>
-		<ee:transform doc:name="racerEntry" doc:id="94b5ec19-ec02-4f5d-a560-f04c11ec2405" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<set-variable doc:name="racerId" doc:id="814d8546-47e4-43c7-ab0d-814c31653de0" variableName="racerId" value="#[attributes.uriParams.id]"/>
+        <flow-ref doc:name="getEntry" doc:id="b89d2882-8c61-46c5-91ff-f85e4bced437" name="getEntry" target="racerEntry" />
+        <flow-ref doc:name="getScore" doc:id="ac980a2a-e90f-4053-a930-e69b1a6e813e" name="getScore" />
+        <ee:transform doc:name="racerEntry" doc:id="94b5ec19-ec02-4f5d-a560-f04c11ec2405">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-vars.racerEntry ++ (payload)
-]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" message="get:\racers\(id)\entry:race-data-system-api-config" />
+vars.racerEntry ++ (payload)]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger level="INFO" message="get:\racers\(id)\entry:race-data-system-api-config" />
     </flow>
     <flow name="post:\racers\(id)\entry\score:application\json:race-data-system-api-config">
-		<set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a86658aa-8192-4f56-ab29-99765f2400b2" variableName="racerId" />
+        <set-variable value="#[attributes.uriParams.id]" doc:name="racerId" doc:id="a86658aa-8192-4f56-ab29-99765f2400b2" variableName="racerId" />
         <flow-ref doc:name="incrby" doc:id="e4b76a05-fa5d-4b4f-b2c4-41f888bf8827" name="incrby" />
         <flow-ref doc:name="getScore" doc:id="9889f68a-8222-44bd-8b83-ed88b97b9c70" name="getScore" />
         <logger level="INFO" message="post:\racers\(id)\entry:race-data-system-api-config" />
@@ -207,7 +206,7 @@ vars.racerEntry ++ (payload)
         <flow-ref doc:name="inactivateRacer" doc:id="25918b6a-68e3-4d0b-8938-e10eb88dbaca" name="setActive" />
     </flow>
     <flow name="get:\entries:race-data-system-api-config">
-        <set-variable value="#[attributes.queryParams[0]]" doc:name="active" doc:id="980a1524-7d40-452a-a5ef-515a93dca1e7" variableName="active" />
+		<set-variable value="#[attributes.queryParams[0]]" doc:name="active" doc:id="980a1524-7d40-452a-a5ef-515a93dca1e7" variableName="active" />
         <flow-ref doc:name="getActiveEntries" doc:id="31e62e59-affe-4587-a2b3-26ae2b760c4d" name="getActiveEntries" />
     </flow>
 </mule>
