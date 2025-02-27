@@ -111,14 +111,7 @@ output text/plain
 		</try>
 		<foreach doc:name="For Each" doc:id="d82f1926-4e84-416f-9d92-7df452e3103f" collection="#[vars.score]">
 			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[vars.key]" field="#[payload.challenge]" target="challengeScore" />
-			<choice doc:name="Choice" doc:id="3fe97189-ac42-4058-8367-9e07bb77cba4" >
-				<when expression='#[vars.score.challenge[0] == "name"]'>
-					<logger level="TRACE" doc:name="Logger" doc:id="6ab1e52a-6c16-4405-9a99-3450d454b9f6" message='#["name score updated"]'/>
-				</when>
-				<otherwise >
-					<lettuce:publish doc:name="season4:score" doc:id="70376e27-f6cd-451f-ada8-944468cf9a8c" config-ref="Lettuce_Redis_Config" channel='#["season4:score:$(vars.score[0].challenge):$(vars.racerId)"]' message='#[payload.score]' />
-				</otherwise>
-			</choice>
+			<lettuce:publish doc:name="season4:score" doc:id="70376e27-f6cd-451f-ada8-944468cf9a8c" config-ref="Lettuce_Redis_Config" channel='#["season4:score:$(vars.score[0].challenge):$(vars.racerId)"]' message="#[payload.score]" />
 		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>
@@ -174,33 +167,4 @@ activeKeys
     </ee:transform>
 		<logger level="INFO" doc:name="Check racers" doc:id="e0809f96-bf1f-46f5-891b-cf19676d4ec4" message="Racers retrieved are #[payload]"/>
 </flow>
-	<flow name="entryFlow" doc:id="390a97e6-a905-42fb-83b4-40faa5f54a96" >
-		<lettuce:subscribe-channel-pattern doc:name="season4:score:*" doc:id="48ed8f26-d3a9-40fe-821a-3f724f65687f" config-ref="Lettuce_Redis_Pubsub">
-			<lettuce:patterns >
-				<lettuce:pattern value="season4:score:*" />
-			</lettuce:patterns>
-		</lettuce:subscribe-channel-pattern>
-		<ee:transform doc:name="member and challenge" doc:id="ca012836-1736-44fe-8b41-d8573ce7ec82" >
-			<ee:message >
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="member" ><![CDATA[%dw 2.0
-output application/json
-
-var splitKey = attributes.channel splitBy(":")
----
-splitKey[3]
-]]></ee:set-variable>
-				<ee:set-variable variableName="challenge" ><![CDATA[%dw 2.0
-output application/json
-
-var splitKey = attributes.channel splitBy(":")
----
-splitKey[2]]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<set-variable value='#["leaderboard:$(vars.challenge):cf613770-c413-401c-be28-b2db767a292c"]' doc:name="leaderBoardKey" doc:id="cb941abd-a417-4042-a65d-a1fe12f9b867" variableName="leaderBoardKey"/>
-		<lettuce:zincrby doc:name="ZINCRBY" doc:id="a313526b-cea4-48bf-8b0e-2581ecb878fb" config-ref="Lettuce_Redis_Config" key="#[vars.leaderBoardKey]" increment="#[payload]" member="#[vars.member]"/>
-		<logger level="INFO" doc:name="Logger" doc:id="f49ac0ad-1338-443b-a90c-03131f84dad1" message='#["PSubscribe output is $(payload) "]'/>
-	</flow>
 </mule>

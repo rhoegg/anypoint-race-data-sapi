@@ -172,7 +172,7 @@ output application/json
                 <flow-ref doc:name="getRacerResults" doc:id="fe1a38e8-bbc5-4dec-abd1-b79aab2799d8" name="getRacerResults" />
             </when>
             <otherwise>
-                <flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="getLeaderboard" />
+                <flow-ref doc:name="getLeaderboard" doc:id="a23976db-f2b6-4940-83f7-ee37b5e7a12f" name="AILeaderBoard" />
             </otherwise>
         </choice>
     </flow>
