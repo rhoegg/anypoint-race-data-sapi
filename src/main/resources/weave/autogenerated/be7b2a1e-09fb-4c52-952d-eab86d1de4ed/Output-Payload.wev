@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_be7b2a1e_09fb_4c52_952d_eab86d1de4ed_Output_Payload = Array<{  raceId: String,   racerId: String,   name: String,   start: String,   rank: Number,   time: Number,   email: String,   _?: Any}>
-

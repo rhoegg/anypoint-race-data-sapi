@@ -1,6 +1,6 @@
 %dw 2.0
 
-type auto_08f2af47_7a95_406e_a9bb_fbc688ff1234_Input_Attributes = {|
+type auto_fdf85935_e726_4410_bf4f_ab7ae571d20b_Input_Attributes = {|
   clientCertificate?: {|
     publicKey?: {|  |}, 
     "type"?: String, 
@@ -11,9 +11,9 @@ type auto_08f2af47_7a95_406e_a9bb_fbc688ff1234_Input_Attributes = {|
   method: String, 
   queryParams: {|
     timespan?: "daily" | "season" | "weekly", 
-    minRank?: Number, 
     racerId?: String, 
-    count?: Number
+    count?: Number, 
+    season?: Number
   |}, 
   queryString: String, 
   relativePath: String, 

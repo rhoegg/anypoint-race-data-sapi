@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd">
+http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<lettuce:pubsub-config name="Lettuce_Redis_Pubsub" doc:name="Lettuce Redis Pubsub" doc:id="269a5262-e3c6-460a-80a0-6765f97ea14c" >
+		<lettuce:pubsub-connection host="${redis.host}" port="${redis.port}" password="${redis.password}"/>
+	</lettuce:pubsub-config>
 	<sub-flow name="updateEntry" doc:id="b78f8610-4182-4514-8451-f6d010fadca4" >
 		<ee:transform doc:name="Transform Message" doc:id="3ae4eae0-716c-42c2-b14d-e1e073353752">
 			<ee:message>
@@ -100,16 +104,14 @@ output text/plain
 "score:aiagent:$(vars.aiagent)"]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
-					<lettuce:set doc:name="SET" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key">
+					<lettuce:set doc:name="scores:season4:" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key">
 				</lettuce:set>
 				</on-error-continue>
 			</error-handler>
 		</try>
 		<foreach doc:name="For Each" doc:id="d82f1926-4e84-416f-9d92-7df452e3103f" collection="#[vars.score]">
-			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[vars.key]" field="#[payload.challenge]" target="setResult" />
-		</foreach>
-		<foreach doc:name="For Each" doc:id="72f3e4bd-a622-41b7-9e26-ec27f4b29b44" collection="#[vars.score]">
-			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase entry-total score" doc:id="5f07d1e3-82db-452c-9643-3eeaf49f92b7" config-ref="Lettuce_Redis_Config" key='#["challenge:aiagent:$(vars.racerId)"]' field="score" target="setResult" />
+			<lettuce:hincrby increment="#[payload.score]" doc:name="Increase Challenge Score" doc:id="da4a6f69-4421-499a-af8f-1c17951e4d80" config-ref="Lettuce_Redis_Config" key="#[vars.key]" field="#[payload.challenge]" target="challengeScore" />
+			<lettuce:publish doc:name="season4:score" doc:id="70376e27-f6cd-451f-ada8-944468cf9a8c" config-ref="Lettuce_Redis_Config" channel='#["season4:score:$(vars.score[0].challenge):$(vars.racerId)"]' message="#[payload.score]" />
 		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="f69ac95e-84f4-4058-9818-7798e5eba6f2" />
 	</flow>

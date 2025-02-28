@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_fdf85935_e726_4410_bf4f_ab7ae571d20b_Output_Variables_leaderboardKey = Any
+
