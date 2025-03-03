@@ -118,24 +118,25 @@ output text/plain
 	<sub-flow name="getScore" doc:id="c28d1aa9-bb84-4fcc-b9a7-bda954391198" >
 		<lettuce:get doc:name="scores:season" doc:id="32f9e4d0-f0ca-464c-b87e-7957cc22cd28" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key" />
 		<lettuce:hgetall doc:name="HGETALL" doc:id="f093a969-4f77-4cdb-9289-0cd3eea755c5" config-ref="Lettuce_Redis_Config" key="#[vars.key]"/>
-		<ee:transform doc:name="Score" doc:id="22da1aa9-35c5-4cb2-bbe2-09dad05fe0f4">
+		<ee:transform doc:name="Score" doc:id="7549e619-8a2e-4e25-b718-e7cbdc8e8152">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 
-var questionScore = payload[0] as Number
-var biasScore = payload[1] as Number
-var nameScore = payload[2]as Number
+var questionScore = (payload.question default 0) as Number
+var biasScore = (payload.bias default 0) as Number
+var nameScore = (payload.name default 0) as Number
 
 ---
 {
-	challengeScore:{
-		name: nameScore,
-		question: questionScore default 0,
-		bias: biasScore
-	},
-	score: (nameScore + questionScore)
-}]]></ee:set-payload>
+    challengeScore: {
+        name:      nameScore,
+        question:  questionScore,
+        bias:      biasScore
+    },
+    score: nameScore + questionScore + biasScore
+}
+]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="92967652-9075-4d46-bf65-48dee0bfcaed" message="Score of racer is #[payload]"/>
