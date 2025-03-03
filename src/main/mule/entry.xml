@@ -122,14 +122,17 @@ output text/plain
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
-var nameScore = payload[1]as Number
+
 var questionScore = payload[0] as Number
+var biasScore = payload[1] as Number
+var nameScore = payload[2]as Number
 
 ---
 {
 	challengeScore:{
 		name: nameScore,
 		question: questionScore default 0,
+		bias: biasScore
 	},
 	score: (nameScore + questionScore)
 }]]></ee:set-payload>
