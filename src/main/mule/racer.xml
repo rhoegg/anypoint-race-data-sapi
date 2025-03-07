@@ -10,8 +10,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
 http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 	<flow name="createRacer" doc:id="c7ff3e7b-0818-470c-a5b8-22f131e32aab" >
-		<set-variable value="cda86178c99142269714c19c34a64447" doc:name="Set Variable" doc:id="db4ba6d7-3ef9-47c2-98c6-976995d1a4ee" variableName="clientId"/>
-		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(vars.clientId)"]' target="racerId"/>
+		<redis:get doc:name="racerid" doc:id="6fb44077-d10d-47a8-b2ef-3f593a71d634" config-ref="redisConfig" key='#["racerid:$(payload.clientId)"]' target="racerId"/>
 		<choice doc:name="Choice" doc:id="7d9d698a-571f-49e0-8a94-d236d1cfdb6a" >
 			<when expression="#[isEmpty(vars.racerId)]">
 				<set-variable value="#[uuid()]" doc:name="racerId" doc:id="ebb1fe37-d5ca-4380-aae3-4d1d320e1cb3" variableName="racerId"/>

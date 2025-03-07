@@ -98,13 +98,16 @@ payload pluck ((value, key) -> {
 					<set-variable value="#[uuid()]" doc:name="aiagent" doc:id="927d340c-8b11-4c27-a760-5dc05b6bfb08" variableName="aiagent" />
 					<ee:transform doc:name="Transform Message" doc:id="d6ef0791-a780-44e8-b5a1-f0836ee78827">
 					<ee:message>
-						<ee:set-payload><![CDATA[%dw 2.0
+					</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="key" ><![CDATA[%dw 2.0
 output text/plain
 ---
-"score:aiagent:$(vars.aiagent)"]]></ee:set-payload>
-					</ee:message>
+"score:aiagent:$(vars.aiagent)"]]></ee:set-variable>
+						</ee:variables>
 				</ee:transform>
-					<lettuce:set doc:name="scores:season4:" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]' target="key">
+					<lettuce:set doc:name="scores:season4:" doc:id="3fc04d37-b851-4f77-abf8-f62d360e371b" config-ref="Lettuce_Redis_Config" key='#["scores:season4:$(vars.racerId)"]'>
+						<lettuce:value ><![CDATA[#[vars.key]]]></lettuce:value>
 				</lettuce:set>
 				</on-error-continue>
 			</error-handler>
