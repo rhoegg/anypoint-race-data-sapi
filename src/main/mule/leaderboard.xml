@@ -105,7 +105,7 @@ leaderboard
 	<flow name="RotateDailyLeaderboard" doc:id="7ce4dff7-1012-4c54-b5b3-b54bbb8d230d" >
 		<scheduler doc:name="Scheduler" doc:id="45a964e6-6a25-4dfc-bc7e-a524d665fdb4" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="1" timeUnit="DAYS" startDelay="10"/>
+				<cron expression='"0 0 0 * * ?"' timeZone="America/Chicago"/>
 			</scheduling-strategy>
 		</scheduler>
 		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="9488bef0-5305-4d99-92ce-e5edb1fe6639" variableName="challenges" />
@@ -130,7 +130,7 @@ var time = now() as String {format: 'yyyyMMddhhmm'}
 	<flow name="RotateWeeklyLeaderboard" doc:id="d6e7f025-85c1-4544-8c03-fbde31d21089" >
 		<scheduler doc:name="Scheduler" doc:id="c7f05aa8-b022-4c55-aa0b-778eff64234f" >
 			<scheduling-strategy >
-				<fixed-frequency frequency="7" timeUnit="DAYS" startDelay="1"/>
+				<cron expression='"0 0 0 ? * MON"' timeZone="America/Chicago"/>
 			</scheduling-strategy>
 		</scheduler>
 		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="595c0346-6798-4577-a44b-af21e0062c0d" variableName="challenges" />
