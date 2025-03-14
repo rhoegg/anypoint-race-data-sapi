@@ -42,7 +42,7 @@ splitKey[2]]]></ee:set-variable>
 			<otherwise >
 				<set-variable doc:name="leaderBoardKey" doc:id="aa820b80-5b72-4a65-a6d3-5a39147ebff5" variableName="leaderBoardKey" value='#[["leaderboard:$(vars.challenge):daily","leaderboard:$(vars.challenge):weekly","leaderboard:$(vars.challenge):season"]]'/>
 				<foreach doc:name="For Each" doc:id="ad273602-f6cb-4699-8341-8235dbe8742a" collection="#[vars.leaderBoardKey]">
-					<lettuce:get doc:name="GET" doc:id="ed98d5c4-04e8-4835-bd5a-3c44e54899ad" config-ref="Lettuce_Redis_Config" key="#[payload]" target="realChallengeKey" />
+					<lettuce:get doc:name="GET the leaderboard timespan string " doc:id="ed98d5c4-04e8-4835-bd5a-3c44e54899ad" config-ref="Lettuce_Redis_Config" key="#[payload]" target="realChallengeKey" />
 					<lettuce:zincrby doc:name="increase leaderboard challenge score" doc:id="5d9fc4a1-87fb-490a-ac11-7c459e195415" config-ref="Lettuce_Redis_Config" key="#[vars.realChallengeKey]" increment="#[vars.score]" member="#[vars.member]" />
 				</foreach>
 			</otherwise>
@@ -110,12 +110,12 @@ leaderboard
 		</scheduler>
 		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="9488bef0-5305-4d99-92ce-e5edb1fe6639" variableName="challenges" />
 		<foreach doc:name="For Each" doc:id="b5a21adb-99cc-4bdb-a99b-50c26fea8226" collection="#[vars.challenges]">
-			<set-variable doc:name="Set Variable" doc:id="ba2604bf-9dc0-43ba-a08f-e123e54c2dae" variableName="newKey" value="#['leaderboard:$(payload):daily:' ++ uuid()]"/>
-			<set-variable value="#[payload]" doc:name="Set Variable1" doc:id="e63db731-fe06-497e-b66f-6d5caa33fade" variableName="newkeys" />
-			<lettuce:set doc:name="SET" doc:id="c8dfc59e-1071-46ac-9c76-ea3472ed3dea" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):daily']">
+			<set-variable doc:name="Set new UUID for challenge" doc:id="ba2604bf-9dc0-43ba-a08f-e123e54c2dae" variableName="newKey" value="#['leaderboard:$(payload):daily:' ++ uuid()]"/>
+			<set-variable value="#[payload]" doc:name=" Store the  new challenge UUID for HSET" doc:id="e63db731-fe06-497e-b66f-6d5caa33fade" variableName="newkeys" />
+			<lettuce:set doc:name="SET the new daily challenge UUID" doc:id="c8dfc59e-1071-46ac-9c76-ea3472ed3dea" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):daily']">
 				<lettuce:value ><![CDATA[#[vars.newKey]]]></lettuce:value>
 			</lettuce:set>
-			<lettuce:hset doc:name="HSET" doc:id="9e850d6a-a528-4be5-a90a-db2e96cd5dde" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):daily:history']">
+			<lettuce:hset doc:name="HSET for storing daily history" doc:id="9e850d6a-a528-4be5-a90a-db2e96cd5dde" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):daily:history']">
 				<lettuce:fields ><![CDATA[#[output application/java
 var time = now() as String {format: 'yyyyMMddhhmm'}
 ---
@@ -135,12 +135,12 @@ var time = now() as String {format: 'yyyyMMddhhmm'}
 		</scheduler>
 		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="595c0346-6798-4577-a44b-af21e0062c0d" variableName="challenges" />
 		<foreach doc:name="For Each" doc:id="d00cae8f-a0bc-4eef-b9b7-5a2dbbf1a9ce" collection="#[vars.challenges]" >
-			<set-variable value="#['leaderboard:$(payload):weekly:' ++ uuid()]" doc:name="Set Variable" doc:id="a11f8885-fb4b-4397-b9d0-06d44e880597" variableName="newKey" />
-			<set-variable value="#[payload]" doc:name="Set Variable1" doc:id="9a0ffb1d-b905-44f7-ae1e-e4bb0e0d82fc" variableName="newkeys" />
-			<lettuce:set doc:name="SET" doc:id="e6473d83-193a-46ec-bc5e-25ddd86350ee" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):weekly']" >
+			<set-variable value="#['leaderboard:$(payload):weekly:' ++ uuid()]" doc:name="Set new UUID for challenge" doc:id="a11f8885-fb4b-4397-b9d0-06d44e880597" variableName="newKey" />
+			<set-variable value="#[payload]" doc:name=" Store the  new challenge UUID for HSET" doc:id="9a0ffb1d-b905-44f7-ae1e-e4bb0e0d82fc" variableName="newkeys" />
+			<lettuce:set doc:name="SET the new weekly challenge UUID" doc:id="e6473d83-193a-46ec-bc5e-25ddd86350ee" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):weekly']" >
 				<lettuce:value ><![CDATA[#[vars.newKey]]]></lettuce:value>
 			</lettuce:set>
-			<lettuce:hset doc:name="HSET" doc:id="90ee4603-cdd6-4f5f-8827-5ed1554a6d63" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):weekly:history']" >
+			<lettuce:hset doc:name="HSET for storing weekly history" doc:id="90ee4603-cdd6-4f5f-8827-5ed1554a6d63" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):weekly:history']" >
 				<lettuce:fields ><![CDATA[#[output application/java
 var time = now() as String {format: 'yyyyMMdd'}
 ---
