@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:redis="http://www.mulesoft.org/schema/mule/redis"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:lettuce="http://www.mulesoft.org/schema/mule/lettuce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:redis="http://www.mulesoft.org/schema/mule/redis" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/redis http://www.mulesoft.org/schema/mule/redis/current/mule-redis.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd">
+http://www.mulesoft.org/schema/mule/lettuce http://www.mulesoft.org/schema/mule/lettuce/current/mule-lettuce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
 	<sub-flow name="getRacerResults" doc:id="08f2af47-7a95-406e-a9bb-fbc688ff1234">
 		<logger level="INFO" doc:name="Logger" doc:id="26ab4101-012c-4419-97a7-e8f813c81569" />
 	</sub-flow>
@@ -39,11 +40,18 @@ splitKey[2]]]></ee:set-variable>
 				<logger level="INFO" doc:name="Logger" doc:id="e1d32296-6679-4c1d-999d-6f46a6e5a309" />
 			</when>
 			<otherwise >
-				<set-variable value='#["leaderboard:$(vars.challenge):cf613770-c413-401c-be28-b2db767a292c"]' doc:name="leaderBoardKey" doc:id="aa820b80-5b72-4a65-a6d3-5a39147ebff5" variableName="leaderBoardKey" />
-				<lettuce:zincrby doc:name="increase leaderboard challenge score" doc:id="5d9fc4a1-87fb-490a-ac11-7c459e195415" config-ref="Lettuce_Redis_Config" key="#[vars.leaderBoardKey]" increment="#[vars.score]" member="#[vars.member]" />
+				<set-variable doc:name="leaderBoardKey" doc:id="aa820b80-5b72-4a65-a6d3-5a39147ebff5" variableName="leaderBoardKey" value='#[["leaderboard:$(vars.challenge):daily","leaderboard:$(vars.challenge):weekly","leaderboard:$(vars.challenge):season"]]'/>
+				<foreach doc:name="For Each" doc:id="ad273602-f6cb-4699-8341-8235dbe8742a" collection="#[vars.leaderBoardKey]">
+					<lettuce:get doc:name="GET the leaderboard timespan string " doc:id="ed98d5c4-04e8-4835-bd5a-3c44e54899ad" config-ref="Lettuce_Redis_Config" key="#[payload]" target="realChallengeKey" />
+					<lettuce:zincrby doc:name="increase leaderboard challenge score" doc:id="5d9fc4a1-87fb-490a-ac11-7c459e195415" config-ref="Lettuce_Redis_Config" key="#[vars.realChallengeKey]" increment="#[vars.score]" member="#[vars.member]" />
+				</foreach>
 			</otherwise>
 		</choice>
-		<lettuce:zincrby doc:name="increase overall leaderboard score" doc:id="6fa39b83-5d66-4802-8168-bcf57580c48a" config-ref="Lettuce_Redis_Config" key="leaderboard:overall:daily:e6d2cc8f-2dc7-4c2e-8b67-81f555ea2088" increment="#[vars.score]" member="#[vars.member]" />
+		<set-variable value='#[["leaderboard:overall:daily","leaderboard:overall:weekly","leaderboard:overall:season"]]' doc:name="Set Variable" doc:id="0756c22b-1d9e-42ff-a2b2-b7d86f043452" variableName="timeSpan"/>
+		<foreach doc:name="For Each" doc:id="05d918da-d42e-4d30-a830-fcf7c302e1d4" collection="#[vars.timeSpan]">
+			<lettuce:get doc:name="GET" doc:id="7ae05d51-1715-429b-8a48-8474817fc60c" config-ref="Lettuce_Redis_Config" key="#[payload]" target="realChallengeKey" />
+			<lettuce:zincrby doc:name="increase overall leaderboard score" doc:id="6fa39b83-5d66-4802-8168-bcf57580c48a" config-ref="Lettuce_Redis_Config" increment="#[vars.score]" member="#[vars.member]" key='#[vars.realChallengeKey]' />
+		</foreach>
 		<logger level="INFO" doc:name="Logger" doc:id="0601f28e-16ff-47ae-889f-70a3e145e019" message='#["PSubscribe output is $(payload) "]' />
 	</flow>
 	<sub-flow name="getLeaderboard" doc:id="fdf85935-e726-4410-bf4f-ab7ae571d20b">
@@ -94,4 +102,55 @@ leaderboard
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="ca2d99ab-14a9-4048-a18d-0a74d7835ece" />
 	</sub-flow>
+	<flow name="RotateDailyLeaderboard" doc:id="7ce4dff7-1012-4c54-b5b3-b54bbb8d230d" >
+		<scheduler doc:name="Scheduler" doc:id="45a964e6-6a25-4dfc-bc7e-a524d665fdb4" >
+			<scheduling-strategy >
+				<cron expression='0 0 0 * * ?' timeZone="America/Chicago"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="9488bef0-5305-4d99-92ce-e5edb1fe6639" variableName="challenges" />
+		<foreach doc:name="For Each" doc:id="b5a21adb-99cc-4bdb-a99b-50c26fea8226" collection="#[vars.challenges]">
+			<set-variable doc:name="Set new UUID for challenge" doc:id="ba2604bf-9dc0-43ba-a08f-e123e54c2dae" variableName="newKey" value="#['leaderboard:$(payload):daily:' ++ uuid()]"/>
+			<set-variable value="#[payload]" doc:name=" Store the  new challenge UUID for HSET" doc:id="e63db731-fe06-497e-b66f-6d5caa33fade" variableName="newkeys" />
+			<lettuce:set doc:name="SET the new daily challenge UUID" doc:id="c8dfc59e-1071-46ac-9c76-ea3472ed3dea" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):daily']">
+				<lettuce:value ><![CDATA[#[vars.newKey]]]></lettuce:value>
+			</lettuce:set>
+			<lettuce:hset doc:name="HSET for storing daily history" doc:id="9e850d6a-a528-4be5-a90a-db2e96cd5dde" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):daily:history']">
+				<lettuce:fields ><![CDATA[#[output application/java
+var time = now() as String {format: 'yyyyMMdd'}
+---
+
+{
+   (time): vars.newKey
+}]]]></lettuce:fields>
+			</lettuce:hset>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="548deffe-b173-47f2-8c6b-de8d93d8e97d" />
+	</flow>
+	<flow name="RotateWeeklyLeaderboard" doc:id="d6e7f025-85c1-4544-8c03-fbde31d21089" >
+		<scheduler doc:name="Scheduler" doc:id="c7f05aa8-b022-4c55-aa0b-778eff64234f" >
+			<scheduling-strategy >
+				<cron expression='0 0 0 ? * MON' timeZone="America/Chicago"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[['question','bias','overall']]" doc:name="Set challenges array" doc:id="595c0346-6798-4577-a44b-af21e0062c0d" variableName="challenges" />
+		<foreach doc:name="For Each" doc:id="d00cae8f-a0bc-4eef-b9b7-5a2dbbf1a9ce" collection="#[vars.challenges]" >
+			<set-variable value="#['leaderboard:$(payload):weekly:' ++ uuid()]" doc:name="Set new UUID for challenge" doc:id="a11f8885-fb4b-4397-b9d0-06d44e880597" variableName="newKey" />
+			<set-variable value="#[payload]" doc:name=" Store the  new challenge UUID for HSET" doc:id="9a0ffb1d-b905-44f7-ae1e-e4bb0e0d82fc" variableName="newkeys" />
+			<lettuce:set doc:name="SET the new weekly challenge UUID" doc:id="e6473d83-193a-46ec-bc5e-25ddd86350ee" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(payload):weekly']" >
+				<lettuce:value ><![CDATA[#[vars.newKey]]]></lettuce:value>
+			</lettuce:set>
+			<lettuce:hset doc:name="HSET for storing weekly history" doc:id="90ee4603-cdd6-4f5f-8827-5ed1554a6d63" config-ref="Lettuce_Redis_Config" key="#['leaderboard:$(vars.newkeys):weekly:history']" >
+				<lettuce:fields ><![CDATA[#[output application/java
+var time = now() as String {format: 'yyyyMMdd'}
+---
+
+{
+   (time): vars.newKey
+}]]]></lettuce:fields>
+			</lettuce:hset>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="7a6eba85-31ed-4bc3-88eb-eee25bc160bb" />
+	</flow>
+    
 </mule>
